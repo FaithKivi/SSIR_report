@@ -1,0 +1,18 @@
+# LaTeX 编译中间文件
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.bcf
+
+# build 目录：忽略全部，仅保留 main.pdf
+build/*
+!build/main.pdf
+
+# 编辑器配置
+.vscode/
