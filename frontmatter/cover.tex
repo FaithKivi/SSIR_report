@@ -1,4 +1,7 @@
 % 封面
+\newcommand{\ReportWorkName}{}
+\newcommand{\ReportSubmitDate}{}
+
 \thispagestyle{empty}
 \vspace*{41mm}
 \begin{center}
@@ -10,7 +13,11 @@
 \end{center}
 
 \vspace{48mm}
-\CoverField{作品名称：}{\ReportWorkName}
+\noindent
+\makebox[30mm][l]{\heiti\zihao{3}作品名称：}%
+\underline{\makebox[110mm][c]{\heiti\zihao{3}\ReportWorkName}}\par
 \vspace{13mm}
-\CoverField{提交日期：}{\ReportSubmitDate}
+\noindent
+\makebox[30mm][l]{\heiti\zihao{3}提交日期：}%
+\underline{\makebox[110mm][c]{\heiti\zihao{3}\ReportSubmitDate}}\par
 \clearpage

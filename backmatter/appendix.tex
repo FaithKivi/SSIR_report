@@ -1,0 +1,268 @@
+\appendix
+\chapter*{附录}
+\addcontentsline{toc}{chapter}{附录}
+
+\newcounter{appendixsection}
+\newcommand{\appendixsection}[1]{%
+  \refstepcounter{appendixsection}%
+  \section*{附录\Alph{appendixsection}\quad #1}%
+}
+
+\appendixsection{操作域上的非线性}
+DNN组件产生输入依赖的局部响应，这些响应跨特征混合并跨层复合。对于具有\(L\)个隐藏层和逐点激活的前馈网络，在可微点处的雅可比矩阵具有如下形式
+\begin{equation}
+J_{f_\theta}(x) = W^{(L+1)} D^{(L)}(x) W^{(L)} \cdots D^{(1)}(x) W^{(1)}, \tag{21}
+\end{equation}
+其中\(W^{(l)}\)是权重矩阵，\(D^{(l)}(x)\)包含在当前预激活处的激活导数。对于ReLU网络，局部仿射映射可以跨越激活区域发生变化，其数量取决于架构[1]。
+
+令\(G(i) = (\overline{l_{s_1}(i)}, \ldots, \overline{l_{s_\ell}(i)})\)表示选定神经元的分组响应。如果单个仿射映射在包含被比较输入的定义域上描述\(G\)，那么
+\begin{equation}
+G(i) = Ai + b \quad \Longrightarrow \quad G(c + k) - G(c) = Ak. \tag{22}
+\end{equation}
+此时连续响应中由密钥诱导的变化独立于\(c\)。非线性映射可以使这一变化依赖于\(c\)，从而塑造图像与密钥之间的相互作用。附录B中的阈值决策确定了这些响应如何转换为离散消息状态。
+
+这一比较解释了SSIR所使用的响应机制。附录D和E中的安全界刻画了所得的输出分布和恢复分布。
+\appendixsection{连续到离散状态表示}
+令 \(z(i) \in \mathbb{R}^d\) 为第IV-C1节中定义的选定神经元状态向量，其中 \(g\ell \le d\) 且 \(t \in (0,1)\)。定义
+\begin{equation}
+G_j(i) = \frac{1}{g} \sum_{a=g(j-1)+1}^{gj} z_a(i),
+\end{equation}
+\begin{equation}
+[F_k(c)]_j = \mathbf{1}[G_j(c+k) \ge t], \quad 1 \le j \le \ell. \tag{23}
+\end{equation}
+对于每个 \(s \in \{0,1\}^\ell\)，关联的阈值单元为
+\begin{equation}
+\mathcal{B}_s = \{u \in \mathbb{R}^\ell : \mathbf{1}[u_j \ge t] = s_j \text{ for all } j\}. \tag{24}
+\end{equation}
+单元 \(\mathcal{B}_s\) 划分 \(\mathbb{R}^\ell\)，并且
+\begin{equation}
+\Omega_s = G^{-1}(\mathcal{B}_s) \cap \mathcal{I}_{\mathrm{fp}}. \tag{25}
+\end{equation}
+因此，非空的 \(\Omega_s\) 划分了融合图像域，并且每个输入恰好确定一个表示字符串。
+
+在生成过程中，连续损失
+\begin{equation}
+l_{be}^{(n)} = \sum_{j=1}^\ell (G_j(p_n + k) - s_{t_j})^2 \tag{26}
+\end{equation}
+与直接和间接泄漏损失一起指导优化。截断产生下一个固定精度图像，其离散状态由算法1中的循环条件评估。因此，成功终止由下式确定
+\begin{equation}
+F_k(p_n) = S_t \iff p_n + k \in \Omega_{S_t}. \tag{27}
+\end{equation}
+约定的数值约定固定了图像表示、融合加法、DNN推理、状态读出、分组和阈值评估。融合使用可交换的逐元素加法，无截断或溢出；\(T_{\mathrm{trc}}\) 中的截断应用于更新后的图像分量。双方评估相同的确定性 \(F_k\)。对于成功输出 \(c = p_{n^*}\)，恢复因此给出
+\begin{equation}
+\widehat{S}_t = F_k(c) = S_t, \quad \mathrm{DEC}_k(c) = \mathrm{Et}^{-1}(S_t) = m. \tag{28}
+\end{equation}
+这是下文使用的正确性关系。截断使优化和恢复期间使用的图像表示一致，而约定的评估约定确定状态映射。
+
+\appendixsection{概率密文图像生成的进一步分析}
+\subsection*{A. 成功输出分布}
+令 \(\mathcal{R} = \mathrm{supp}(D_R)\) 且 \(\Xi = \mathrm{supp}(D_\Xi)\)，并令 \(\mathrm{Succ}\) 表示成功终止。每次尝试独立采样 \(r\) 和 \(\xi\)。对于固定的 \(k, m\)，成功执行中初始图像的分布为
+\begin{equation}
+w_{k,m}(r) = \frac{D_R(r) \Pr[\mathrm{Succ} \mid k, m, r]}{\Pr[\mathrm{Succ} \mid k, m]}. \tag{29}
+\end{equation}
+由第V节中的支持配置条件，分母为正。令 \(\mathcal{R}_{k,m} = \mathrm{supp}(w_{k,m})\)。对于 \(r \in \mathcal{R}_{k,m}\)，定义
+\begin{equation}
+\begin{aligned}
+p_{k,m,r}(c) &= \Pr[\mathrm{ENC}_k(m; r, \xi) = c \mid \mathrm{Succ}, k, m, r], \\
+p_{k,m}(c) &= \sum_{r \in \mathcal{R}_{k,m}} w_{k,m}(r) p_{k,m,r}(c), 
+\end{aligned} \tag{30}
+\end{equation}
+其中第一个概率是对 \(\xi \leftarrow D_\Xi\) 取的。这些分布是归一化的，并且成功输出预言机的独立调用独立地采样 \(p_{k,m}\)。
+\subsection*{B. 碰撞贡献与一致界}
+
+定义来自不同初始图像的输出分布之间的最大重叠为
+\begin{equation}
+\varepsilon_{\mathrm{init}} = \max_{\substack{k \in \mathcal{K}, \ m \in \mathcal{M} \\ r_1, r_2 \in \mathcal{R}_{k,m}, \ r_1 \neq r_2}} \sum_{c \in \mathcal{C}} p_{k,m,r_1}(c) p_{k,m,r_2}(c). \tag{31}
+\end{equation}
+如果不存在可接受的相异对，则令 \(\varepsilon_{\mathrm{init}} = 0\)。对于固定初始图像，定义
+\begin{equation}
+\varepsilon_{\mathrm{opt}} = \max_{\substack{k \in \mathcal{K}, \ m \in \mathcal{M} \\ r \in \mathcal{R}_{k,m}}} \sum_{c \in \mathcal{C}} p_{k,m,r}(c)^2. \tag{32}
+\end{equation}
+这两个量分别界定了不同初始图像之间和固定初始图像内部的碰撞。
+
+对于固定的 \(k, m\)，简记 \(w_r = w_{k,m}(r)\) 和 \(p_r = p_{k,m,r}\)，并令 \(\kappa_{k,m} = \sum_r w_r^2\)。两个独立的成功输出满足
+\begin{equation}
+\begin{aligned}
+\Pr[c_1 = c_2 \mid k, m] &= \sum_r w_r^2 \sum_c p_r(c)^2 \\
+&\quad + \sum_{r_1 \neq r_2} w_{r_1} w_{r_2} \sum_c p_{r_1}(c) p_{r_2}(c) \\
+&\le \kappa_{k,m} \varepsilon_{\mathrm{opt}} + (1 - \kappa_{k,m}) \varepsilon_{\mathrm{init}}.
+\end{aligned} \tag{33}
+\end{equation}
+因此，
+\begin{equation}
+\varepsilon_{\mathrm{prob}} = \max_{k,m} \left[ (1 - \kappa_{k,m}) \varepsilon_{\mathrm{init}} + \kappa_{k,m} \varepsilon_{\mathrm{opt}} \right] \tag{34}
+\end{equation}
+是式(14)的一致界，并且 \(\Pr[c_1 \neq c_2 \mid k, m] \ge 1 - \varepsilon_{\mathrm{prob}}\)。
+
+如果每次尝试都以概率1成功，则 \(w_{k,m} = D_R\) 且 \(\kappa_{k,m} = \kappa_R = \sum_r D_R(r)^2\)，于是
+\begin{equation}
+\varepsilon_{\mathrm{prob}} = (1 - \kappa_R) \varepsilon_{\mathrm{init}} + \kappa_R \varepsilon_{\mathrm{opt}}. \tag{35}
+\end{equation}
+泄漏损失倾向于使图像与初始图像相似，而独立采样的R-FGSM状态则改变更新轨迹。碰撞量刻画了所选配置下得到的输出分布。
+
+\appendixsection{IND-CPA优势界与查询限制}
+\subsection*{A. 参考分布与转录偏差}
+
+令 \(N = |\mathcal{M}|\)，\(\pi(k) = \Pr[\mathrm{KeyGen}() = k]\)，并定义
+\begin{equation}
+\bar{p}_k(c) = \frac{1}{N} \sum_{u \in \mathcal{M}} p_{k,u}(c). \tag{36}
+\end{equation}
+
+参考预言机独立地从 \(\bar{p}_k\) 中采样每个输出，忽略所请求的消息。
+
+对于具有相异 \(c_i\) 且正似然低于的转录 \(T_j = ((m_1, c_1), \ldots, (m_j, c_j))\)，定义
+\begin{equation}
+\eta_q = \max_{\substack{T_j \text{ 无碰撞} \\ 1 \le j \le q}} \left| \frac{\sum_{k \in \mathcal{K}} \pi(k) \prod_{i=1}^j p_{k,m_i}(c_i)}{\sum_{k \in \mathcal{K}} \pi(k) \prod_{i=1}^j \bar{p}_k(c_i)} - 1 \right|. \tag{37}
+\end{equation}
+
+对于挑战条目，\(m_i\) 仅表示实际消息 \(m_b\) 以计算记录似然。
+
+\subsection*{B. 混合游戏}
+
+令 \(G_0\) 为真实的IND-CPA游戏。正确性意味着 \(p_{k,u}(c) > 0 \Rightarrow \mathrm{DEC}_k(c) = u\)。因此，对于固定密钥，不同消息具有不相交的成功输出支撑，并且
+\begin{equation}
+p_{k,m}(c) = N \bar{p}_k(c) \mathbf{1}[\mathrm{DEC}_k(c) = m],
+\end{equation}
+\begin{equation}
+\Pr_{c \leftarrow \bar{p}_k} [\mathrm{DEC}_k(c) = m] = \frac{1}{N}. \tag{38}
+\end{equation}
+
+在 \(G_1\) 中，每个对 \(m\) 的请求，包括对 \(m_b\) 的挑战请求，都从以 \(\mathrm{DEC}_k(c) = m\) 为条件的 \(\bar{p}_k\) 中采样。其输出律恰好是 \(p_{k,m}\)，因此 \(G_0 \equiv G_1\)。
+
+在 \(G_2\) 中，每个请求均匀地从 \(\mathcal{M}\) 中采样 \(u\)，并返回一个独立的 \(c \leftarrow \mathrm{ENC}_k(u)\)。每个输出因此服从 \(\bar{p}_k\)。固定对手的随机性和挑战比特，对于固定顺序的记录，自适应查询选择因子相互抵消。因此，
+\begin{equation}
+\frac{\Pr[G_1 : T_j]}{\Pr[G_2 : T_j]} = \frac{\sum_k \pi(k) \prod_{i=1}^j p_{k,m_i}(c_i)}{\sum_k \pi(k) \prod_{i=1}^j \bar{p}_k(c_i)}. \tag{39}
+\end{equation}
+
+每个真实记录都具有正参考似然。因此，式37将无碰撞贡献的统计距离上界限制为 \(\eta_q/2\)，包括在自适应消息选择下。
+
+\subsection*{C. 重复输出与证明完成}
+
+令 \(\mathrm{Coll}\) 表示至多 \(q\) 个生成输出中的重复输出。在 \(G_1\) 中，不同消息的输出不能重合。对于 \(i < j\)，以密钥、对手随机性、挑战比特以及输出 \(i\) 之前的历史为条件。记 \(p(c) = p_{k,m_i}(c)\)，并令 \(a_c \in [0,1]\) 为请求 \(j\) 发生且目标为 \(m_i\) 的条件概率，给定 \(c_i = c\)。请求 \(j\) 处的新随机性给出
+\begin{equation}
+\Pr_{G_1}[c_i = c_j] \le \sum_c p(c) a_c p(c) \le \sum_c p(c)^2 \le \varepsilon_{\mathrm{prob}}. \tag{40}
+\end{equation}
+
+在 \(G_2\) 中，固定密钥支撑的不相交性给出
+\begin{equation}
+\sum_c \bar{p}_k(c)^2 = \frac{1}{N^2} \sum_{m \in \mathcal{M}} \sum_c p_{k,m}(c)^2 \le \frac{\varepsilon_{\mathrm{prob}}}{N}. \tag{41}
+\end{equation}
+
+联合界给出 \(\Pr_{G_s}[\mathrm{Coll}] \le \binom{q}{2} \varepsilon_{\mathrm{prob}}\)，其中 \(s \in \{1,2\}\)。结合无碰撞和重复输出贡献，
+\begin{equation}
+\begin{aligned}
+\Delta(G_1, G_2) &\le \frac{\eta_q}{2} + \frac{\Pr_{G_1}[\mathrm{Coll}] + \Pr_{G_2}[\mathrm{Coll}]}{2} \\
+&\le \frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}}.
+\end{aligned} \tag{42}
+\end{equation}
+这里 \(\Delta\) 表示统计距离。对手在 \(G_2\) 中的视图独立于 \(b\)。由于 \(G_0 \equiv G_1\)，相同的界适用于真实游戏中的优势，从而证明定理1。
+
+\subsection*{D. 可接受的生成查询限制}
+
+选择非负预算 \(\varepsilon_{\mathrm{mix}}, \varepsilon_{\mathrm{col}}\)，其中 \(\varepsilon_{\mathrm{sec}} = \varepsilon_{\mathrm{mix}} + \varepsilon_{\mathrm{col}} < 1/2\)。如果
+\begin{equation}
+\frac{\eta_Q}{2} \le \varepsilon_{\mathrm{mix}}, \quad \binom{Q}{2} \varepsilon_{\mathrm{prob}} \le \varepsilon_{\mathrm{col}}, \tag{43}
+\end{equation}
+则整数生成查询限制 \(Q \ge 1\) 是可接受的。
+
+由式37，增加查询限制会扩大取最大值的记录集合。因此 \(\eta_q\) 是非递减的，对于 \(q \ge 1\)，\(\binom{q}{2} \varepsilon_{\mathrm{prob}}\) 也是非递减的。对于每个 \(1 \le q \le Q\)，
+\begin{equation}
+\frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}} \le \varepsilon_{\mathrm{mix}} + \varepsilon_{\mathrm{col}} = \varepsilon_{\mathrm{sec}}, \tag{44}
+\end{equation}
+这证明了式18。
+
+这通过诱导分布直接定义了允许的限制，而没有规定 \(\eta_q\) 的增长模型。它不需要选择最大的可接受限制。如果没有 \(Q \ge 1\) 满足式43，则该界不能证明所选优势预算是合理的。
+
+\appendixsection{IND-CCA1优势界与恢复限制}
+
+\subsection*{A. 同密钥与分裂密钥预言机游戏}
+
+两个游戏都采样 \(k \leftarrow \mathrm{KeyGen}()\) 用于生成。分裂密钥游戏还采样一个独立的 \(\bar{k} \leftarrow \mathrm{KeyGen}()\)，并在整个游戏过程中固定。区分者可以交错进行生成和恢复查询，直到它关闭恢复阶段；此后仅允许生成查询。这些辅助游戏没有外部挑战比特。
+
+维护一个由对 \((c, m)\) 组成的生成表 \(\mathrm{T}_{\mathrm{enc}}\)，以及一个包含对每个恢复输入首次响应的恢复表 \(\mathrm{T}_{\mathrm{dec}}\)。对于 \(s \in \{\mathrm{same}, \mathrm{split}\}\)，令 \(k_{\mathrm{same}} = k\) 且 \(k_{\mathrm{split}} = \bar{k}\)。恢复查询按以下顺序处理：
+\begin{equation}
+\mathrm{GameDec}_s(x) = 
+\begin{cases}
+y, & (x, y) \in \mathrm{T}_{\mathrm{dec}}, \\
+m, & (x, m) \in \mathrm{T}_{\mathrm{enc}}, \\
+\mathrm{DEC}_{k_s}(x), & \text{否则}.
+\end{cases} \tag{45}
+\end{equation}
+将每个首次恢复响应存储在 \(\mathrm{T}_{\mathrm{dec}}\) 中。重复输入保留其缓存响应，即使它们后来作为生成输出出现。记 \(P_s^{\mathcal{D}} = \Pr[\mathrm{Game}_s^{\mathcal{D}} = 1]\) 并定义
+\begin{equation}
+\delta_{\mathrm{dec}}(q, q_d) = \sup_{\mathcal{D}} \left| P_{\mathrm{same}}^{\mathcal{D}} - P_{\mathrm{split}}^{\mathcal{D}} \right|, \tag{46}
+\end{equation}
+其中 \(\mathcal{D}\) 遍历概率多项式时间区分者，它们在关闭恢复阶段前最多接收 \(q\) 个生成输出并最多进行 \(q_d\) 次恢复查询。
+
+\subsection*{B. 归约到IND-CPA}
+
+构造一个IND-CPA对手 \(\mathcal{A}\)，它运行 \(\mathcal{A}'\)，将其生成查询转发给CPA预言机，并将其挑战对转发给CPA挑战者。它独立采样 \(\bar{k}\)，并使用式45中的分裂密钥规则和本地表回答挑战前恢复查询。挑战前生成消息对模拟器已知。未知的挑战消息不需要，因为恢复查询在挑战前结束。
+
+为了将此模拟与真实的CCA1游戏进行比较，为辅助游戏构造一个区分者 \(\mathcal{D}\)。它运行 \(\mathcal{A}'\) 并转发其预言机请求。当 \(\mathcal{A}'\) 提交 \((m_0, m_1)\) 时，它采样 \(b \leftarrow \{0, 1\}\)，关闭恢复阶段，并获得 \(m_b\) 的一个生成输出作为挑战。它输出 \(1[b' = b]\)。此挑战生成调用包含在 \(q\) 中。
+
+令 \(P_{\mathrm{same}}\) 和 \(P_{\mathrm{split}}\) 为所得成功概率。正确性和确定性恢复使同密钥视图与真实CCA1视图相同，而分裂密钥视图是CPA模拟。式46给出 \(|P_{\mathrm{same}} - P_{\mathrm{split}}| \le \delta_{\mathrm{dec}}(q, q_d)\)。因此，
+\begin{equation}
+\begin{aligned}
+\mathrm{Adv}_{\mathcal{A}'}^{\mathrm{IND-CCA1}} &= |P_{\mathrm{same}} - 1/2| \\
+&\le |P_{\mathrm{split}} - 1/2| + \delta_{\mathrm{dec}}(q, q_d) \\
+&= \mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} + \delta_{\mathrm{dec}}(q, q_d).
+\end{aligned} \tag{47}
+\end{equation}
+代入定理1即证明式19。
+
+\subsection*{C. 命中事件之外的似然偏差}
+
+固定区分者的随机性和一个完整的有序转录 \(\tau\)，包括恢复阶段的关闭。提取记录
+\begin{equation}
+\begin{aligned}
+T_E(\tau) &= ((m_1, c_1), \ldots, (m_e, c_e)), \quad e \le q, \\
+T_D^\circ(\tau) &= ((x_1, y_1), \ldots, (x_h, y_h)), \quad h \le q_d.
+\end{aligned} \tag{48}
+\end{equation}
+第二条记录仅包含首次非重放恢复查询：重复输入以及首次查询时已记录为生成输出的输入被排除。令
+\begin{equation}
+\begin{aligned}
+L_E(k) &= \prod_{i=1}^e p_{k,m_i}(c_i), \\
+L_D(k) &= \prod_{j=1}^h \mathbf{1}[\mathrm{DEC}_k(x_j) = y_j].
+\end{aligned} \tag{49}
+\end{equation}
+定义 \(\mathrm{Hit}\) 为 \(T_D^\circ(\tau)\) 中的输入随后作为生成输出返回的事件。在该事件之外，同密钥与分裂密钥的似然比为
+\begin{equation}
+R(\tau) = \frac{\sum_k \pi(k) L_E(k) L_D(k)}{\left( \sum_k \pi(k) L_E(k) \right) \left( \sum_k \pi(\bar{k}) L_D(\bar{k}) \right)}. \tag{50}
+\end{equation}
+对于查询限制 \(q, d\)，定义
+\begin{equation}
+\zeta_{q,d} = \max_{\substack{\tau \text{ 在 Hit 外可达} \\ |T_E(\tau)| \le q, \ |T_D^\circ(\tau)| \le d \\ \text{分裂密钥似然} > 0}} |R(\tau) - 1|. \tag{51}
+\end{equation}
+对于完整的有序转录，自适应查询选择因子相互抵消。每个正的同密钥似然都有正的分裂密钥似然。因此，\(\mathrm{Hit}\) 之外的转录对统计距离的贡献至多为 \(\zeta_{q, q_d} / 2\)。
+
+\subsection*{D. 命中概率与恢复查询限制}
+
+定义 \(\mu_{\mathrm{enc}} = \max_{k,m,c} p_{k,m}(c)\)。由于 \(p_{k,m}(c)^2 \le \sum_z p_{k,m}(z)^2 \le \varepsilon_{\mathrm{prob}}\)，
+\begin{equation}
+\mu_{\mathrm{enc}} \le \sqrt{\varepsilon_{\mathrm{prob}}}. \tag{52}
+\end{equation}
+对于每个较早的首次非重放恢复输入和每个较晚的生成输出，新的生成随机性将条件命中概率限制在 \(\mu_{\mathrm{enc}}\) 内。这在两个游戏的自适应查询选择下都成立。因此，联合界给出
+\begin{equation}
+\Pr[\mathrm{Game}_s : \mathrm{Hit}] \le q q_d \mu_{\mathrm{enc}}, \quad s \in \{\mathrm{same}, \mathrm{split}\}. \tag{53}
+\end{equation}
+结合 \(\mathrm{Hit}\) 内部和外部的贡献，
+\begin{equation}
+\begin{aligned}
+\delta_{\mathrm{dec}}(q, q_d) &\le \frac{\zeta_{q, q_d}}{2} + \frac{1}{2} \sum_{s \in \{\mathrm{same}, \mathrm{split}\}} \Pr[\mathrm{Game}_s : \mathrm{Hit}] \\
+&\le \frac{\zeta_{q, q_d}}{2} + q q_d \mu_{\mathrm{enc}} \\
+&\le \frac{\zeta_{q, q_d}}{2} + q q_d \sqrt{\varepsilon_{\mathrm{prob}}}.
+\end{aligned} \tag{54}
+\end{equation}
+从附录D固定一个可接受的生成查询限制 \(Q \ge 1\)，并选择 \(\varepsilon_{\mathrm{dec}} \ge 0\) 使得 \(\varepsilon_{\mathrm{sec}} + \varepsilon_{\mathrm{dec}} < 1/2\)。如果
+\begin{equation}
+\frac{\zeta_{Q, Q_d}}{2} + Q Q_d \mu_{\mathrm{enc}} \le \varepsilon_{\mathrm{dec}}, \tag{55}
+\end{equation}
+则整数恢复查询限制 \(Q_d \ge 0\) 是可接受的。式51中的最大值是在嵌套转录集合上取的，因此 \(\zeta_{q,d}\) 在两个查询限制中都是非递减的。对于 \(1 \le q \le Q\) 和 \(q_d \le Q_d\)，
+\begin{equation}
+\begin{aligned}
+\delta_{\mathrm{dec}}(q, q_d) &\le \frac{\zeta_{q, q_d}}{2} + q q_d \mu_{\mathrm{enc}} \\
+&\le \frac{\zeta_{Q, Q_d}}{2} + Q Q_d \mu_{\mathrm{enc}} \le \varepsilon_{\mathrm{dec}}.
+\end{aligned} \tag{56}
+\end{equation}
+结合式18，这证明了式20。在没有恢复查询时，\(L_D(k) = 1\)，所以 \(\zeta_{q,0} = 0\)；两个预言机游戏重合，且 \(\delta_{\mathrm{dec}}(q, 0) = 0\)。因此 \(Q_d = 0\) 总是恢复仅生成基线，而正的恢复允许量需要相应的分布条件。
