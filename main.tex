@@ -1,4 +1,4 @@
-\documentclass[UTF8,a4paper,zihao=-4,fontset=fandol,openany]{ctexbook}
+\documentclass[UTF8,a4paper,zihao=-4,fontset=windows,openany]{ctexbook}
 
 \usepackage[
   top=25.4mm,
@@ -13,6 +13,9 @@
 \usepackage{tocloft}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{float}
 \usepackage[hidelinks,unicode,bookmarksopen=true,bookmarksnumbered=true,bookmarksdepth=2]{hyperref}
 
 \setstretch{1.5}
@@ -45,18 +48,876 @@
 }
 
 \begin{document}
+\raggedbottom
 \songti\zihao{-4}
 \pagenumbering{gobble}
 
-\input{frontmatter/cover}
-\input{frontmatter/instructions}
-\input{frontmatter/contents}
-\input{chapters/abstract}
-\input{chapters/chapter1-overview}
-\input{chapters/chapter2-design}
-\input{chapters/chapter3-testing}
-\input{chapters/chapter4-innovation}
-\input{chapters/chapter5-conclusion}
-\input{backmatter/references}
-\input{backmatter/appendix.tex}
+% --- frontmatter/cover ---
+% 封面
+\newcommand{\ReportWorkName}{}
+\newcommand{\ReportSubmitDate}{}
+
+\thispagestyle{empty}
+\vspace*{41mm}
+\begin{center}
+  {\heiti\zihao{1}
+    中国研究生网络安全创新大赛\par
+    \vspace{4mm}
+    作品报告\par
+  }
+\end{center}
+
+\vspace{48mm}
+\noindent
+\makebox[30mm][l]{\heiti\zihao{3}作品名称：}%
+\underline{\makebox[110mm][c]{\heiti\zihao{3}\ReportWorkName}}\par
+\vspace{13mm}
+\noindent
+\makebox[30mm][l]{\heiti\zihao{3}提交日期：}%
+\underline{\makebox[110mm][c]{\heiti\zihao{3}\ReportSubmitDate}}\par
+\clearpage
+% --- end frontmatter/cover ---
+% --- frontmatter/instructions ---
+% 填写说明（按原模板要求，本页保留）
+\thispagestyle{empty}
+\begin{center}
+  {\heiti\zihao{3}填写说明\par}
+\end{center}
+\vspace{7mm}
+
+\begin{enumerate}
+  \item 所有参赛项目必须为一个基本完整的设计。作品报告书旨在能够清晰准确地阐述（或图示）该参赛队的参赛项目（或方案）。
+  \item 作品报告采用 A4 纸撰写。除标题外，所有内容必需为宋体、小四号字、1.5 倍行距。
+  \item 作品报告中各项目说明文字部分仅供参考，作品报告书撰写完毕后，请删除所有说明文字。（本页不删除）
+  \item 作品报告模板里已经列的内容仅供参考，作者可以在此基础上增加内容或对文档结构进行微调。
+  \item 为保证网评的公平、公正，作品报告中应避免出现作者所在学校、院系和指导教师等泄露身份的信息。一经发现，取消作品参赛资格。
+\end{enumerate}
+\clearpage
+% --- end frontmatter/instructions ---
+% --- frontmatter/contents ---
+% 目录（需至少编译两次）
+\tableofcontents
+\thispagestyle{empty}
+\vspace{18mm}
+\noindent\songti\zihao{-4}说明：可适当根据作品内容进行修改
+% --- end frontmatter/contents ---
+% --- chapters/abstract ---
+\clearpage
+\pagenumbering{arabic}
+\pagestyle{plain}
+\chapter*{摘要}
+\addcontentsline{toc}{chapter}{摘要}
+随着信息技术的发展，数据传输对安全性和隐蔽性的要求越来越高。
+受深度神经网络(DNN)与密码学交叉研究的启发，我们提供了一种由图像密钥控制DNN状态的
+安全隐蔽信息表示框架(SSIR,Secure and Stealthy Information Representation)。
+在SSIR框架中，发送方首先使用分组编码将消息表示为现有DNN中选定神经元的目标状态，随后对随即图像进行对抗优化
+以生成密文图像。该密文图像与预共享图像密钥结合后，可诱导出目标DNN状态。
+接收方将同一图像密钥叠加到密文图像上，并将合成图像输入DNN，通过解码所诱导的神经状态来恢复消息。
+为进一步增强隐蔽性，SSIR识别密文图像中的直接视觉泄露和间接DNN状态泄露，并通过基于损失的优化同时抑制两者。
+本文理论分析推到了查询相关的IND-CPA和IND-CCA1优势上界，并给出了实现有界查询安全所需的分布条件及每密钥
+查询次数限制。实验结果表明：（1）SSIR对各种工具具有鲁棒性，并能在图像失真条件下容忍比特级误差；
+（2）直接泄露指标平均最多降低99.79\%，间接泄露平均降低56.02\%；
+（3）密文图像生成仅需300ms,消息恢复仅需10ms，且无需额外模型准备；
+（4）可兼容多种常见DNN，并保持其原有功能。
+% --- end chapters/abstract ---
+% --- chapters/chapter1-overview ---
+\chapter{作品概述}
+\section{项目背景}
+随着信息技术的发展，数据传输面临的风险日趋复杂。
+仅保护传输内容已不足以应对这些风险，传输行为本身也可能需要避免引起第三方不必要的关注。
+因此，现代数据传输提出了双重需求：一是安全性，即防止未授权方获取受保护信息；
+二是隐蔽性，即减少可被观测的痕迹，避免暴露敏感信息正在传输~\cite{1-wang-moulin-2008}。
+传统加密技术具有强保密性，并被广泛用于保护消息内容。
+然而，仅有保密性并不能隐藏受保护传输的存在。
+图像隐写通过在自然载体中隐藏信息，满足了这一补充性需求[1][2]。
+将二者直接结合虽可同时提供安全性与隐蔽性，但通常需要额外组件，
+并带来准备和部署上的负担[3][4]。因此，如何直接复用现有计算资源，构建安全且隐蔽的传输机制，成为一个值得探索的方向。
+
+深度神经网络（DNN）已广泛部署于各类信息系统[5]，
+并日益成为重要计算基础设施的一部分。
+同时，它们在密码学[6][7]和图像隐写[8]中的应用也表明，神经计算在信息保护方面具有潜力。
+常见视觉DNN通过非线性变换将输入图像映射为高维神经元状态，为信息表示提供了丰富空间[9]。
+这引出一个值得探究的问题：现有DNN能否利用其神经元状态表示敏感信息，从而实现由密钥控制的恢复，
+并实现类图像的隐蔽传输？受此问题启发，我们探索了一种基于表示的框架。该框架不同于传统密码学与隐写学范式，
+旨在同时提供安全性与隐蔽性。它复用已部署于各类信息系统中的现有DNN，
+而无需修改其参数或功能。具体而言，我们将消息表示为选定神经元的目标状态，
+并通过对抗优化将随机图像迭代修改为外观自然的密文图像。
+当该密文图像与预共享图像密钥结合时，可在DNN中诱导出目标状态，
+从而实现密钥控制的消息恢复，同时保持类图像的传输隐蔽性。
+
+然而，设计此类框架面临两个主要挑战。第一，难以将DNN精确引导至目标状态。
+尽管对抗扰动能够改变DNN状态[10][11]，但神经元之间复杂的依赖与耦合关系，
+使得将输入修改精确转化为DNN状态变化十分困难。
+一些神经元可能对这类修改不敏感，无法达到目标值[12][13]，我们称其为不响应神经元。
+第二，生成的密文图像可能泄露额外信息。其中包含用于引导目标DNN状态的细微图像修改。
+然而，即使没有图像密钥，这些修改仍可能通过视觉变化[14]或DNN状态偏差泄露信息。
+因此，如何在利用图像密钥诱导目标状态的同时抑制这种泄露，是另一项挑战。
+
+为解决上述挑战，我们提出了 SSIR，一种由图像密钥控制 DNN 状态的安全隐蔽信息表示框架。
+在该框架中，发送方与接收方预先秘密共享一个图像密钥，而 DNN 与编码方法均公开且确定。
+发送方将随机图像与图像密钥叠加，得到融合图像；将其输入 DNN，并迭代修改该融合图像，
+直至 DNN 呈现表示消息的目标状态。随后，发送方从融合图像中减去图像密钥，得到密文图像，
+并通过公共信道传输。接收方将密文图像与图像密钥叠加，得到融合图像；
+将其输入 DNN，并通过解码所得 DNN 状态恢复消息。
+
+\section{技术背景}
+
+
+\section{相关工作}
+在神经网络与密码学的交叉研究中，已有工作大致可分为两类：一类探索基于学习的信息保护机制，另一类研究密码操作的神经实现。
+Abadi 和 Andersen [6] 提出了对抗神经密码学，通过联合训练负责保护与恢复的合作网络，
+并与敌对网络对抗。该方法利用学习得到的变换实现信息保护，其中专门的网络训练是框架构建的一部分。
+Gérault 等人 [7] 则研究了如何在深度神经网络中安全实现密码操作。
+他们指出，当输入由二进制值扩展到任意实数时，
+直接用神经网络实现的分组密码可能变得脆弱。
+为弥合离散密码计算与连续神经计算之间的差异，
+他们提出了基于 ReLU 的实现，并保证了正确性与安全性。
+该工作表明将密码功能融入神经网络具有可行性，同时凸显了两个计算领域之间接口设计的重要性。
+
+基于图像的信息传输是另一个相关方向 [2], [16]–[18]。
+HiDDeN [3] 通过联合训练嵌入网络与提取网络，将消息隐藏于图像载体中。
+固定神经网络隐写 [19] 则通过固定网络优化图像以恢复消息，从而减少对专用网络训练的依赖。
+Ghamizi 等人 [20] 利用对抗扰动实现隐写通信，Luo 等人 [8] 在固定网络隐写中引入密钥控制的恢复。
+这些工作从不同角度探索了图像优化、神经响应与恢复控制的组合。
+
+与上述工作不同，SSIR 利用图像密钥控制现有公开分类 DNN 的状态，
+实现安全且隐蔽的信息表示。它将图像密钥融合与分组编码相结合，
+以提高状态诱导的可靠性，同时保持所复用 DNN 的参数与原始功能不变。
+联合优化可抑制视觉泄漏与未加密 DNN 状态痕迹，形式化分析则刻画了基于查询的区分优势。
+该设计将可靠状态诱导、泄漏抑制与安全性刻画统一在一个信息表示框架中。
+\section{作品特色}
+通过分析已有方案的优缺点，我们提出了 SSIR——一种由图像密钥控制现有公开 DNN 状态的安全隐蔽信息表示框架。
+该框架基于图像密钥融合、分组编码和对抗优化实现，具有以下特点：
+
+\begin{itemize}
+    \item \textbf{新型信息表示框架}：将机密信息表示为由图像密钥控制的 DNN 状态，
+    以实现安全且隐蔽的传输。为精确诱导目标状态，
+    本作品将信息编码为目标比特串，并利用分组神经元响应与目标比特之间的可微损失，
+    指导对扰动图像的迭代修改，从而生成密文图像。分组编码对相邻神经元响应取平均，
+    以缓解不响应神经元的影响，提高信息表示的可靠性。
+
+    \item \textbf{双重泄漏抑制机制}：分析了对手在没有图像密钥时可能从密文图像中获取的额外信息，
+    并将其分为两类：直接视觉泄漏，即密文图像与原始图像之间的视觉差异；
+    间接 DNN 状态泄漏，即仅由密文图像引起的 DNN 状态变化。
+    为减轻上述泄漏，本作品在生成密文图像时设计了基于损失的优化策略，同时抑制视觉痕迹和未加密 DNN 状态偏差。
+
+    \item \textbf{形式化安全分析}：对 SSIR 进行了形式化安全分析，
+    分析了输入依赖的 DNN 响应如何支持密钥控制的表示，并刻画了概率密文图像生成与多语义特性。
+    通过混合论证，本作品推导了查询相关的 IND-CPA 和 IND-CCA1 优势界，
+    并给出了实现有限查询安全所需的分布条件。由此得到的可接受查询限制，
+    为配置每个密钥的使用与更新策略提供了基础。
+
+    \item \textbf{高效兼容的实验验证}：在 ImageNet~[15] 和真实照片上评估了 SSIR。
+    结果表明，SSIR 能够抵抗多种攻击，对位级失真具有容忍度，
+    并通过分组编码提升了生成的可靠性与效率。直接泄漏最高降低 99.79\%，
+    间接泄漏平均降低 56.02\%。同时，SSIR 具有较高效率与良好兼容性：
+    生成一条 150 位信息的密文图像仅需 300~ms，消息恢复仅需 10~ms，且无需额外模型准备。
+    并且可支持多种现有 DNN，而无需修改其参数或原有功能。
+\end{itemize}
+\section{应用前景分析}
+当前，敏感信息传输面临双重困境：传统加密技术虽然能够保护消息内容，但无法隐藏通信行为本身，
+密文在公开信道上的频繁出现容易引起第三方注意，图像隐写技术虽然能够把消息隐藏到自然载体中，
+却往往依赖专用网络训练或额外组件，部署成本较高，密钥控制、状态诱导可靠性和抗攻击能力也难以兼顾。
+随着即时通信、云会议、物联网、应急指挥等场景的发展，会话密钥、控制指令、身份凭证等短小敏感信息、
+需要在公开信道上频繁、快速、隐蔽地传递。仅靠加密难以避免通信行为被监测，
+仅靠隐写又难以保证安全性与可验证性。因此，能够复用现有计算资源、
+同时兼顾保密性与传输隐蔽性的轻量级信息表示机制，将成为未来敏感通信的重要方向。
+
+SSIR 正是面向这一需求提出的。它利用图像密钥控制现有公开 DNN 的神经元状态，
+将消息编码为目标状态，并通过对抗优化生成外观自然的密文图像。
+接收方只需将同一图像密钥叠加到密文图像上，将合成图像输入 DNN，即可通过解码神经状态恢复消息。
+
+在具体应用上，SSIR 可用于：即时通信和云会议中的会话密钥传递与刷新，降低密钥明文暴露风险；
+物联网和边缘设备间的机密控制指令传输，在公开信道上减少被监测和干扰的可能；
+应急通信、企业内部敏感指令和身份凭证的隐蔽分发，以及合法合规的秘密投递通信。
+对于满足分布条件的实例，部署方可按目标优势预算设置每密钥的生成与恢复上限，
+并在同一密钥的会话中累计计数；达到上限前，各方独立生成并秘密预共享替换密钥，
+同时将外部恢复访问限制在已分析的威胁模型内。
+这符合既定密钥管理指南[26]，也使系统在长期运行中保持可配置的安全边界。
+
+因此，SSIR 不仅是一种信息表示方法，也具备实际部署价值。
+它既能服务于企业内部的密钥管理和隐蔽通信，也能用于应急、物联网等对安全性和隐蔽性要求较高的场景，
+具有较好的应用前景。
+% --- end chapters/chapter1-overview ---
+% --- chapters/chapter2-design ---
+\chapter{作品设计与实现}
+
+% 可包括系统方案、实现原理、硬件框图、软件流程、功能和指标等。
+% --- end chapters/chapter2-design ---
+% --- chapters/chapter3-testing ---
+\chapter{作品测试与分析}
+
+本章围绕消息恢复、密钥控制、密文图像的视觉质量、跨设备一致性及生成效率，介绍本作品的测试方案、过程与结果。
+
+\section{测试方案}
+
+测试以一条消息的生成与恢复为基本流程：发送方选取初始图像和预共享图像密钥，将目标消息编码为神经元分组状态，经迭代优化得到密文图像；接收方使用相同密钥、DNN 和编码配置恢复消息。首先以正确密钥检查功能正确性，再更换随机密钥、其他样本的密钥或不提供密钥，观察恢复结果。为检验生成的随机性，在固定消息与密钥的条件下，分别改变初始图像及优化随机状态，或只改变优化随机状态，比较多次生成的图像。
+
+测试还从四个方面考察作品性能。其一，比较不同分组大小下的生成成功率、迭代次数和用时，判断分组编码对不响应神经元的缓解作用。其二，以峰值信噪比（PSNR）、结构相似性（SSIM）、像素差异及直接泄漏代理指标评价图像质量，并比较启用和关闭间接泄漏损失时的神经元状态偏差。其三，测试截获样本分析、生成时间分析、跨设备恢复及图像失真后的恢复。其四，在相同消息长度和图像尺寸下比较生成、恢复及模型准备成本。消息恢复采用比特错误率（BER）和完整消息恢复率（EMR）：BER 越低越好，EMR 表示零比特错误消息所占比例。图像失真测试只报告 BER，不能据此推断每条消息均可完整恢复。
+
+\section{测试环境搭建}
+
+实验使用 ImageNet 数据集和实拍图像，图像尺寸包括 $224\times224$ 与 $896\times896$。实验在 Ubuntu 系统上以 Python 3.10 和 PyTorch 运行，使用 RTX 4090 GPU。默认选取 ShuffleNet V2 的 softmax 前分类分数作为编码所用的 DNN 响应，利用随机化快速梯度符号方法（R-FGSM）生成密文图像。直接与间接泄漏损失的权重分别设为 $\alpha=1000$ 和 $\beta=100$，分组大小 $g=2$，编码阈值为 $0.5$，学习率为 $10^{-4}$。除专门比较分组、学习率、模型或设备的实验外，其余测试沿用上述配置。
+
+生成端和恢复端需要采用相同的模型、神经元选择、分组方式、阈值和数值处理规则，并预先秘密共享图像密钥。跨设备测试另外比较了启用与关闭截断处理 $T_{\mathrm{trc}}$ 的结果，以观察计算精度差异对消息恢复的影响。
+
+\section{测试设备}
+
+默认实验平台采用 RTX 4090 GPU。跨设备兼容性实验还使用 RTX 3070 GPU、Intel Core i7-13700K CPU 和 AMD Ryzen 9 5900HX CPU，并组合不同的生成端与恢复端。该实验用于检验同一消息和初始图像在不同计算设备之间传递时，数值精度变化是否造成解码错误。设备组合及结果见本章第 3.4 节。
+
+\section{测试功能}
+
+\textbf{消息生成与密钥控制。}本作品使用 100 组由不同图像密钥生成的消息与密文图像测试恢复功能。使用正确密钥时，BER 为 $0\%$、EMR 为 $100\%$；随机密钥、其他样本的错误密钥和无密钥时，BER 分别为 $49.9\%$、$49.7\%$ 和 $50.1\%$，EMR 均为 $0\%$。因此，在这组测试中，只有正确密钥实现了完整恢复；错误或缺失密钥下的逐比特结果接近随机猜测。
+
+\textbf{概率生成。}固定消息和图像密钥，分别独立采样初始图像及 R-FGSM 随机状态，完整生成 30 次；再固定初始图像，仅改变优化随机状态，生成 30 次。两组测试均未出现相同的固定精度输出。图~\ref{fig:probabilistic-cipher-images} 展示了第二组实验的代表性密文图像及其与原始图像的结构相似度，平均 SSIM 约为 $97.5\%$。这说明在所测样本中，内部随机优化也能改变输出，同时保持较高的视觉相似度；有限次数的未碰撞观察不能给出任意运行次数下的碰撞概率。
+
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/cipher-images-original-panel.png}{%
+  \def\cipherpanelpath{figures/cipher-images-original-panel.png}%
+}{%
+  \def\cipherpanelpath{C:/Users/Li Zhe/Desktop/SSIR_report-main/figures/cipher-images-original-panel.png}%
+}
+\begin{tikzpicture}
+\node[anchor=south west,inner sep=0] (panel) at (0,0)
+  {\includegraphics[width=0.86\textwidth,trim=0 65 0 0,clip]{\cipherpanelpath}};
+\begin{scope}[x={(panel.south east)},y={(panel.north west)}]
+  \fill[white] (0,0) rectangle (1,0.09);
+  \fill[white] (0,0.49) rectangle (1,0.55);
+  \node[font=\scriptsize] at (0.164,0.52) {相似度：97.46\%};
+  \node[font=\scriptsize] at (0.486,0.52) {相似度：97.45\%};
+  \node[font=\scriptsize] at (0.807,0.52) {相似度：97.48\%};
+  \node[font=\scriptsize] at (0.164,0.045) {相似度：97.50\%};
+  \node[font=\scriptsize] at (0.486,0.045) {相似度：97.48\%};
+  \node[font=\scriptsize] at (0.807,0.045) {原始图像};
+\end{scope}
+\end{tikzpicture}
+\caption{固定初始图像时生成的密文图像与原始图像}
+\label{fig:probabilistic-cipher-images}
+\end{figure}
+
+图~\ref{fig:probabilistic-cipher-images} 中，五幅密文图像使用相同的初始图像、消息和图像密钥，仅改变优化过程的随机状态；右下角为原始图像。五幅密文图像的 SSIM 分别为 $97.46\%$、$97.45\%$、$97.48\%$、$97.50\%$ 和 $97.48\%$，数值集中在 $97.5\%$ 附近。从图中整体观察，物体轮廓、位置和主要颜色均与原图接近，说明这些生成结果在保持图像内容方面表现稳定；与此同时，五次输出并非同一幅固定精度图像。图示反映的是其中一次固定初始图像的代表性结果，多次生成是否重复仍应结合前述两组各 30 次的完整测试判断。SSIM 衡量视觉结构相似性，不能单独说明消息恢复是否正确，也不能作为密文安全性的证明。
+
+\textbf{分组编码。}在 EfficientNet-B0 的 1280 维预分类特征上，以 150 位消息测试 $g\in\{1,2,4,6\}$。每种设置进行了 2000 次配对试验，最大迭代次数为 3000。直接编码（$g=1$）的成功率为 $79\%$，$g=2,4,6$ 均为 $100\%$。其中 $g=2$ 的成功样本平均迭代 $47.5$ 次、生成耗时 $317.8$~ms；$g=4$ 和 $g=6$ 分别为 $50.3$ 次、$336.5$~ms 及 $59.1$ 次、$389.7$~ms。在这一配置下，$g=2$ 同时保持较高表示容量和较低生成成本。
+
+\textbf{图像质量与泄漏抑制。}以 $L_1$、$L_2$、SSIM 和 PSNR 衡量密文图像与原图的差异。本作品将 $(1-\mathrm{SSIM})\times\mathrm{MSE}$ 定义为直接视觉泄漏的代理指标；它衡量可见差异，不能等同于密码学区分优势。各方法的直接泄漏指标与图像质量见表~\ref{tab:direct-leakage}。学习率分别为 $10^{-3}$、$10^{-4}$、$10^{-5}$ 时，该指标为 $39.34$、$0.41$、$0.08$，对应 PSNR 为 $26.62$、$38.14$、$41.93$~dB，SSIM 为 $72.24\%$、$95.89\%$、$97.99\%$。
+
+\begin{table}[H]
+\centering
+\caption{直接信息泄漏对比}
+\label{tab:direct-leakage}
+\small
+\begin{tabular}{lccc}
+\hline
+方法 & PSNR & SSIM & 直接泄漏指标 \\
+\hline
+FNNS~\cite{19-kishore-et-al-2021} & 33.01~dB & 91.56\% & 2.74 \\
+SFNNS~\cite{8-luo-et-al-2023} & 40.88~dB & 97.92\% & 0.11 \\
+SteganoGAN-D~\cite{4-zhang-et-al-2019-steganogan} & 38.40~dB & 91.33\% & 0.81 \\
+SteganoGAN-B~\cite{4-zhang-et-al-2019-steganogan} & 24.21~dB & 81.67\% & 45.17 \\
+SSIR（$\mathrm{lr}=10^{-3}$） & 26.62~dB & 72.24\% & 39.34 \\
+SSIR（$\mathrm{lr}=10^{-4}$） & 38.14~dB & 95.89\% & 0.41 \\
+SSIR（$\mathrm{lr}=10^{-5}$） & 41.93~dB & 97.99\% & 0.08 \\
+\hline
+\end{tabular}
+\end{table}
+
+表~\ref{tab:direct-leakage} 将图像质量与直接泄漏代理指标并列，便于观察同一设置下视觉差异的变化。对本作品而言，学习率从 $10^{-3}$ 降至 $10^{-4}$ 时，PSNR 从 $26.62$~dB 升至 $38.14$~dB，SSIM 从 $72.24\%$ 升至 $95.89\%$，直接泄漏指标由 $39.34$ 降至 $0.41$；继续降至 $10^{-5}$ 后，三项结果分别变为 $41.93$~dB、$97.99\%$ 和 $0.08$。因此，表中差异主要来自学习率的选择，不能只报出其中一行作为所有配置的图像质量。按本章采用的定义，直接泄漏指标同时包含结构差异与均方误差，数值越小表示该代理指标下的可见差异越低。
+
+与表中其他方法相比，本作品在 $\mathrm{lr}=10^{-3}$ 时的直接泄漏指标高于 FNNS、SFNNS 和 SteganoGAN-D；在 $\mathrm{lr}=10^{-5}$ 时则低于这些列出的数值。这里比较的是表中的图像质量和代理指标，并未涵盖各方法的消息容量、恢复条件或模型准备成本，也不意味着数值较小就具有更强的密码学安全性。学习率降低带来的视觉质量改善还需与生成迭代及耗时一并权衡。
+
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/psnr-ssim-ccdf-zh.png}{%
+  \includegraphics[width=\textwidth]{figures/psnr-ssim-ccdf-zh.png}%
+}{%
+  \includegraphics[width=\textwidth]{C:/Users/Li Zhe/Desktop/SSIR_report-main/figures/psnr-ssim-ccdf-zh.png}%
+}
+\caption{不同学习率下密文图像 PSNR 与 SSIM 的互补累积分布}
+\label{fig:psnr-ssim-ccdf}
+\end{figure}
+
+图~\ref{fig:psnr-ssim-ccdf} 的纵轴表示达到或超过横轴阈值的密文图像比例，而不是单幅图像的 PSNR 或 SSIM。左图中，学习率为 $10^{-3}$ 的 PSNR 曲线最先下降，$10^{-4}$ 与 $10^{-5}$ 的曲线依次向右移动；右图的 SSIM 曲线也呈现相同的整体次序。这意味着降低学习率后，获得较高 PSNR 和 SSIM 的图像在所测样本中占比提高。曲线还展示了各配置内部的分布：同一学习率下，不同样本并非都具有表~\ref{tab:direct-leakage} 所列的平均质量，不能用一个平均值代替全部生成结果。
+
+两幅图分别从像素误差和结构相似性观察图像质量，方向一致，但各自反映的差异并不完全相同。结合表~\ref{tab:direct-leakage}，较小学习率在这组测试中同时对应更高的图像质量和更低的直接泄漏代理指标。图中的曲线只能说明这些评价量在已测图像上的分布，无法推断消息是否一定可恢复，也不能据此给出未测试图像或其他参数下的保证。
+
+图~\ref{fig:indirect-leakage} 比较了 ResNet50、DenseNet121、EfficientNet V2 和 Inception V3 在启用与关闭间接泄漏损失时的神经元状态偏差。四个模型的平均降幅为 $56.02\%$。
+
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/indirect-leakage-zh.png}{%
+  \includegraphics[width=\textwidth]{figures/indirect-leakage-zh.png}%
+}{%
+  \includegraphics[width=\textwidth]{C:/Users/Li Zhe/Desktop/SSIR_report-main/figures/indirect-leakage-zh.png}%
+}
+\caption{四种网络的间接信息泄漏对比}
+\label{fig:indirect-leakage}
+\end{figure}
+
+图~\ref{fig:indirect-leakage} 按网络分别列出若干层及其总体状态偏差，蓝色表示未使用间接泄漏损失，青色表示使用该损失。启用损失后，四个网络所标出的平均状态偏差都下降：ResNet50 从 $0.179$ 降至 $0.069$，DenseNet121 从 $0.150$ 降至 $0.058$，EfficientNet V2 从 $0.523$ 降至 $0.252$，Inception V3 从 $0.117$ 降至 $0.047$。其中 EfficientNet V2 的原始偏差及下降后的偏差都高于其余三个网络，说明不同网络对这项约束的响应幅度并不相同。
+
+从各层柱形看，较大的偏差集中在少数层或分类端，例如 ResNet50 的 Fc、DenseNet121 的 Class 以及 EfficientNet V2 的 L2 和 L6；加入损失后，这些位置的柱形均降低。因而，平均值的改善不是由所有层以相同幅度变化形成的，逐层观察有助于识别仍需关注的位置。这里的状态偏差用于评估间接泄漏抑制效果，不等同于从密文图像恢复消息的成功率；图示也只覆盖所列四种网络及其选取的层。
+
+\textbf{攻击、设备与传输扰动。}截获消息--密文图像配对样本后训练恢复模型的实验中，随着样本数量增加，BER 仍约为 $50\%$，未呈现稳定下降趋势。对高斯噪声图像密钥改变标准差并记录生成时间的实验，未观察到生成时间与密钥统计量之间的一致关系。这两项结论只适用于所测攻击方式和参数范围。跨设备测试中，启用截断处理后，RTX 4090、RTX 3070、i7-13700K 和 Ryzen 9 5900HX 的已测生成/恢复组合均达到 $0\%$ BER；未启用时，部分组合出现 $0.67\%$ 至 $2.6\%$ 的 BER。对密文图像施加高斯噪声、椒盐噪声、散斑噪声或 JPEG 压缩后，所测设置的 BER 为 $0.03\%$ 至 $0.82\%$，表明其具有一定的比特级失真容忍度，但不能保证有损传输后的完整消息恢复。
+
+\section{结果分析}
+
+测试结果说明，SSIR 在上述配置下实现了由图像密钥控制的消息恢复。正确密钥测试达到零比特错误，而错误密钥和无密钥测试接近随机猜测。分组编码将所测成功率从直接编码的 $79\%$ 提高到 $100\%$；继续增大分组未带来额外成功率收益，却降低了表示容量并增加生成时间。这支持选取 $g=2$ 作为默认配置。两组各 30 次的随机生成测试也显示，初始图像和优化过程均可影响密文图像的具体形式。
+
+视觉质量与速度之间存在可见取舍。学习率由 $10^{-3}$ 降至 $10^{-5}$ 时，直接泄漏代理指标从 $39.34$ 降至 $0.08$，相对降幅为 $99.79\%$；PSNR 与 SSIM 同时提高，但更小的学习率通常需要更多迭代。150 位消息、$224\times224$ 图像的效率比较中，SSIR 的密文图像生成耗时约 $300$--$500$~ms，恢复约 $10$~ms，且无需专用模型准备；对照方法的嵌入耗时为 $50$--$120$~ms，但模型准备需数小时。因而，SSIR 的在线生成速度并非最快，其优势主要体现在复用现有 DNN、避免专用模型准备，并同时满足所测配置下的密钥控制与视觉质量要求。
+
+测试也给出适用边界。跨设备零 BER 依赖已测硬件组合及截断处理；失真测试虽显示较低 BER，仍会出现比特错误。直接泄漏数值是视觉差异的代理指标，截获样本和时间分析覆盖的是特定攻击条件。形式化的 IND-CPA 与 IND-CCA1 结论还依赖输出分布条件和每密钥查询限制，不能仅凭上述实验数值推出无条件安全性。相关形式化分析见下一节，具体证明见附录。
+\section{安全性分析}
+我们分析了图像密钥控制表示下与输入相关的 DNN 响应，刻画了密文图像的概率生成过程及其多语义特性，
+并推导了查询相关的 IND-CPA 与 IND-CCA1 优势上界。其中，响应分析用于阐明信息表示机制，形式化界限则用于刻画生成输出与恢复分布。
+本节中，ENC 表示算法 1 的完整生成流程（包括泄露损失与截断），DEC 表示消息恢复过程。
+\subsection{用于密钥控制表示的DNN非线性}
+\textbf{1) 输入依赖的DNN响应：}
+SSIR使用选定神经元的分组响应来表示图像密钥下的消息。
+对于不同的密文图像，添加相同的密钥会在这些连续响应中产生不同的变化。
+因此，DNN的非线性响应可以使密钥诱导的变化依赖于当前图像。
+附录A通过与操作域上的固定仿射映射进行比较，阐明了这种相互作用。
+
+\textbf{2) DNN响应的离散使用：}
+受密码操作神经实现[7]的启发，SSIR通过分组编码将连续DNN响应连接到离散消息状态。
+令 \(\mathcal{M}\) 为支持的等长消息空间，具有双射编码 \(\mathrm{Et} : \mathcal{M} \to \{0,1\}^\ell\)，\(C_{\mathrm{fp}}\) 为有限固定精度密文图像域，\(\mathcal{K} = \mathrm{supp}(\mathrm{KeyGen})\) 为合法图像密钥域。
+我们考虑支持的配置，其中对于每个 \(k \in \mathcal{K}\) 和 \(m \in \mathcal{M}\)，生成以正概率成功。
+定义
+\begin{equation}
+\begin{array}{rcl}
+F_k(c) &=& \mathrm{Ec}(z(c+k); g, t), \\
+\mathrm{DEC}_k(c) &=& \mathrm{Et}^{-1}(F_k(c)).
+\end{array}
+\end{equation}
+
+在约定的DNN、编码和数值设置下，双方评估相同的确定性映射 \(F_k\)。
+对于 \(\mathcal{I}_{\mathrm{fp}} = C_{\mathrm{fp}} + \mathcal{K}\)，将与字符串 \(s\) 相关联的融合图像区域定义为
+\begin{equation}
+\Omega_s = \{ i \in \mathcal{I}_{\mathrm{fp}} : \mathrm{Ec}(z(i); g, t) = s \}.
+\end{equation}
+那么当且仅当 \(c + k \in \Omega_s\) 时，\(F_k(c) = s\)。
+在生成过程中，连续分组响应提供优化信号，而离散条件 \(F_k(p_n) = \mathrm{Et}(m)\) 决定成功终止。
+因此，所得的 \(c = p_n\) 满足 \(\mathrm{DEC}_k(c) = m\)。
+因此，相同的DNN响应指导状态诱导，并在阈值处理后确定恢复的字符串。
+当分组响应的变化超过配置的阈值时，它会影响所表示的比特。
+附录B详细介绍了这种从连续到离散的构造及其恢复一致性。
+
+\subsection{概率生成与多语义}
+
+SSIR支持两种互补的表示形式：生成可以为固定消息和密钥产生不同的图像，而固定图像在兼容密钥下可以接受不同的消息解释。
+
+\textbf{1) 概率生成：}
+每次生成尝试使用两个独立采样的随机源：
+\begin{equation}
+r \leftarrow D_R, \quad \xi \leftarrow D_\Xi, \quad c \leftarrow \mathrm{ENC}_k(m; r, \xi). \tag{13}
+\end{equation}
+初始图像 \(r\) 确定 \(p_0 = r/255\) 以及泄漏损失所使用的参考。执行级随机状态 \(\xi\) 确定随机化的R-FGSM更新。由于梯度从当前图像重新计算，这些随机化更新会影响后续的优化轨迹。
+
+令 \(p_{k,m}(c)\) 为成功生成条件下归一化的输出分布，且多次调用间具有独立的新随机性，令 \(\mathcal{C} = \bigcup_{k,m} \mathrm{supp}(p_{k,m}) \subseteq C_{\mathrm{fp}}\)。对于共享 \(k, m\) 的独立成功输出，
+\begin{equation}
+\mathrm{Pr}[c_1 = c_2 \mid k, m] = \sum_{c \in \mathcal{C}} p_{k,m}(c)^2 \le \varepsilon_{\mathrm{prob}}. \tag{14}
+\end{equation}
+附录C通过区分具有相同和不同初始图像的执行来推导此一致界。它捕获了由两种随机源导致的输出离散度，并提供了下文使用的碰撞项。
+
+\textbf{2) 多语义：}
+对于生成的图像 \(c \in \mathcal{C}\) 和目标消息 \(m \in \mathcal{M}\)，定义兼容密钥集
+\begin{equation}
+\mathcal{K}(c, m) = \{ k' \in \mathcal{K} : \mathrm{DEC}_{k'}(c) = m \}. \tag{15}
+\end{equation}
+\textbf{命题（多语义）。}假设 \(C_{\mathrm{fp}} \subseteq \mathcal{K}\)。则对于每个 \(c \in \mathcal{C}\) 和 \(m \in \mathcal{M}\)，\(\mathcal{K}(c, m) \neq \emptyset\)。
+
+\textbf{证明。}由于 \(c \in C_{\mathrm{fp}} \subseteq \mathcal{K}\)，将 \(c\) 用作图像密钥，并选择一个成功输出 \(c' \leftarrow \mathrm{ENC}_c(m)\)。正确性给出 \(F_c(c') = \mathrm{Et}(m)\)。由于融合图像加法是可交换的，
+\begin{equation}
+F_{c'}(c) = F_c(c') = \mathrm{Et}(m). \tag{16}
+\end{equation}
+由于 \(c' \in C_{\mathrm{fp}} \subseteq \mathcal{K}\)，\(\mathrm{DEC}_{c'}(c) = m\)，所以 \(c' \in \mathcal{K}(c, m)\)。\(\square\)
+
+这种构造为每个选定消息提供了对单张图像的替代解释。兼容密钥特定于所选的 \((c, m)\) 对。下文的分析考虑了共享密钥的记录之间的依赖关系。
+\subsection{形式化安全分析}
+
+DNN、编码规则和生成设置是公开的。实例化配置固定了KeyGen、\(r\)和\(\xi\)的分布、完整的生成过程以及数值设置。每个游戏采样一个\(k \leftarrow \mathrm{KeyGen}()\)，并使用上述成功输出分布和新的生成随机性。查询计数在该密钥下跨消息和会话累计。对手是概率多项式时间算法，游戏涉及传输的图像和指定的预言机响应。
+
+\textbf{1) IND-CPA优势界：} 对手\(\mathcal{A}\)在挑战前后自适应地查询\(\mathrm{ENC}_k\)。它提交等长消息\(m_0, m_1\)，对于均匀的\(b \in \{0,1\}\)，接收\(c^* \leftarrow \mathrm{ENC}_k(m_b)\)，并输出\(b'\)。其优势为\(\mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} = |\Pr[b' = b] - 1/2|\)。令\(q\)统计所有生成输出，包括\(c^*\)。
+
+我们将真实游戏与参考游戏进行比较，参考游戏为独立采样的均匀消息生成每个输出。令\(\eta_q\)为在最多\(q\)个输出且具有正参考似然的碰撞自由记录上，其转录似然比偏离1的最大绝对偏差。它衡量了这些记录中剩余的消息依赖性；附录D给出了其显式定义。
+
+\textbf{定理1（查询有界IND-CPA优势）。}每个接收最多\(q\)个输出的此类对手满足
+\begin{equation}
+\mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} \le \frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}}. \tag{17}
+\end{equation}
+混合证明利用正确性将真实生成表示为来自参考分布的条件采样。碰撞自由记录对统计距离的贡献至多为\(\eta_q/2\)，而重复输出对统计距离的贡献至多为\(\binom{q}{2}\varepsilon_{\mathrm{prob}}\)。参考游戏不泄露关于\(b\)的任何信息。
+
+对于优势预算\(\varepsilon_{\mathrm{sec}} = \varepsilon_{\mathrm{mix}} + \varepsilon_{\mathrm{col}} < 1/2\)，附录D规定了关于\(\eta_Q\)和\(\varepsilon_{\mathrm{prob}}\)的条件，以确定可接受的上限\(Q \ge 1\)。对于满足这些条件的任何上限，
+\begin{equation}
+\mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} \le \varepsilon_{\mathrm{sec}}, \quad 1 \le q \le Q. \tag{18}
+\end{equation}
+这给出了CCA1分析的仅生成基线。可接受的上限取决于实例化分布和所选择的优势预算。
+\textbf{2) IND-CCA1 优势界：} 对手 \(\mathcal{A}'\) 可以在挑战前自适应地查询 \(\mathrm{ENC}_k\) 和 \(\mathrm{DEC}_k\)，但挑战后只能查询 \(\mathrm{ENC}_k\)。挑战消息与优势定义沿用上述 IND-CPA 游戏。保留 \(q\) 作为生成输出的数量，并令 \(q_d\) 统计挑战前的恢复查询 \(x \in C_{\mathrm{fp}}\)。
+
+为了分离恢复访问的影响，比较同密钥和分裂密钥预言机游戏。两者都使用 \(k\) 进行生成；分裂密钥游戏在一个独立的固定密钥 \(\bar{k}\) 下回答首次非重放恢复查询，同时保留缓存和精确重放响应。令 \(\delta_{\mathrm{dec}}(q, q_d)\) 为这些限制下它们的最大区分概率差距；见附录 E。
+
+\textbf{定理 2（查询有界 IND-CCA1 优势）。} 对于每个这样的 \(\mathcal{A}'\)，存在一个 IND-CPA 对手 \(\mathcal{A}\) 使得
+\begin{equation}
+\begin{aligned}
+\mathrm{Adv}_{\mathcal{A}'}^{\mathrm{IND-CCA1}} &\le \mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} + \delta_{\mathrm{dec}}(q, q_d) \\
+&\le \frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}} + \delta_{\mathrm{dec}}(q, q_d).
+\end{aligned} \tag{19}
+\end{equation}
+
+分裂密钥视图可以使用 CPA 预言机和 \(k\) 下的本地恢复来模拟。附录 E 通过密钥解耦行为以及较早的恢复输入后来作为生成输出出现的概率，来界定额外的差距。给定一个可接受的 \(Q\)，它指定了恢复查询限制 \(q_d \ge 0\) 的条件，使得
+\begin{equation}
+\mathrm{Adv}_{\mathcal{A}'}^{\mathrm{IND-CCA1}} \le \varepsilon_{\mathrm{sec}} + \varepsilon_{\mathrm{dec}}, \quad 1 \le q \le Q, \quad q_d \le Q_d, \tag{20}
+\end{equation}
+其中 \(\varepsilon_{\mathrm{sec}} + \varepsilon_{\mathrm{dec}} < 1/2\)。当 \(q_d = 0\) 时，额外差距消失，结果退化为定理 1。
+
+这些条件规定了允许的每密钥使用量：部署可以强制执行不大于可接受 \((Q, Q_d)\) 的生成和恢复上限，同时保持所分析的预言机访问模式。有用限制的存在性和大小取决于实例化分布。在部署中还应通过密钥更新和访问限制控制累计查询。
+% --- end chapters/chapter3-testing ---
+% --- chapters/chapter4-innovation ---
+\chapter{创新性说明}
+\section{原理创新}
+本作品针对传统加密与图像隐写直接结合需要额外组件、神经密码学依赖专门网络训练等问题，
+提出了 SSIR——一种由图像密钥控制现有公开 DNN 状态的安全隐蔽信息表示框架。
+与已有方案不同，SSIR 不将消息嵌入像素或专用网络，而是将消息表示为目标 DNN 神经元状态。
+具体而言，发送方将随机图像与预共享图像密钥融合，输入公开 DNN；
+通过分组编码将消息编码为目标比特串，并利用分组神经元响应与目标比特之间的可微损失，
+指导对融合图像的对抗优化，直至 DNN 呈现目标状态；随后减去图像密钥得到密文图像。
+接收方将密文图像与图像密钥叠加，输入同一 DNN，通过解码神经状态恢复消息。
+该原理将密钥控制的消息恢复与隐蔽的公共传输统一起来，密文图像保持自然外观，
+非线性响应和概率生成支持输入依赖的密钥控制以及多样的公共表示。
+为缓解不响应神经元的影响，本作品设计分组编码，对相邻神经元响应取平均，提高状态诱导可靠性。
+此外，本作品识别并抑制两类泄漏：直接视觉泄漏和间接 DNN 状态泄漏，通过基于损失的联合优化同时降低二者。
+形式化分析方面，本作品推导了查询相关的 IND-CPA 和 IND-CCA1 优势界，给出了有界查询安全的分布条件和每密钥查询限制。
+
+\section{性能创新}
+本作品在性能上的创新主要体现在对现有 DNN 基础设施的直接重用和高效生成恢复。
+首先，SSIR 无需专门的模型训练，也无需修改所复用 DNN 的参数，原有推理功能得以完整保留，从而显著降低引入专用安全模型的准备与整合开销。
+公共 DNN 与编码配置相互独立，为构建独立控制的实现提供了灵活性。其次，本作品通过分组编码和基于损失的优化，在保证可靠性的同时提升生成效率。
+实验表明，生成一条 150 位信息的密文图像仅需 300~ms，消息恢复仅需 10~ms，且无需额外模型准备。
+SSIR 兼容多种常见 DNN，并在图像失真条件下容忍比特级误差，对多种攻击具有鲁棒性。模块化设计使生成与恢复过程可独立优化，便于在不同部署环境中按需配置。
+
+\section{安全与部署创新}
+在安全性方面，本作品不仅依赖经验评估，还进行了形式化安全分析。
+SSIR 利用高维图像密钥提供灵活的内容表示和大的候选域；
+当 KeyGen 提供足够的最小熵时，穷举密钥搜索在计算上不可行。
+密钥与传输图像及公共 DNN 配置保持分离，增强了密钥控制的独立性。
+形式化分析给出了查询相关的 IND-CPA 和 IND-CCA1 优势界，并规定了有界查询安全所需的分布条件和每密钥查询限制。
+这些结论为部署方配置密钥使用与更新策略提供了依据：在允许范围内为每个密钥选择生成和恢复上限，以满足目标优势预算；
+计数应在共享同一密钥的会话中累计；在进一步使用可能超过上限之前，各方独立生成并秘密预共享替换密钥，
+同时将外部恢复访问限制在已分析的威胁模型内。上述措施符合既定密钥管理指南[26]，使系统在长期运行中保持可配置的安全边界。
+在应用部署上，SSIR 可用于会话密钥的传递或刷新、机密信号通信、
+秘密投递通信，以及物联网、应急通信等需要兼顾安全性与隐蔽性的场景，具有较好的实用前景。
+% --- end chapters/chapter4-innovation ---
+% --- chapters/chapter5-conclusion ---
+\chapter{总结}
+在这项工作中，我们提出了SSIR，一种安全且隐秘的信息表示框架，
+它通过复用现有的深度神经网络（DNN）来通过图像密钥控制的神经状态表示信息。
+SSIR通过对抗优化生成自然外观的密文图像，并在不修改复用的DNN的情况下抑制直接视觉泄露和间接DNN状态泄露。
+我们描述了概率性密文图像生成和多语义，并推导了依赖查询的IND-CPA和IND-CCA1优势界。
+这些界为有界查询安全性规定了分布条件和每个密钥的查询限制，并为密钥使用和更新的部署策略提供了参考。
+在公共数据集和实际图像上的实验支持了概率性生成、通过分组编码提高可靠性、
+对已测试攻击的抵抗以及比特级失真容忍度。测得的直接泄露减少了最多99.79\%，
+间接泄露平均减少56.02\%。
+SSIR还在不需要额外模型准备的情况下提供了较好的整体性能，并且兼容多种设备和DNN，
+同时保持了DNN的原始参数和功能。总体而言，SSIR为安全且隐秘的信息表示提供了一种新方法，具有理论和实践价值。
+% 在此撰写第五章正文。
+% --- end chapters/chapter5-conclusion ---
+% --- backmatter/references ---
+\begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{参考文献}
+\bibitem{1-wang-moulin-2008}
+Y. Wang and P. Moulin,
+``Perfectly secure steganography: Capacity, error exponents, and code constructions,''
+\emph{IEEE Transactions on Information Theory},
+vol. 54, no. 6, pp. 2706--2722, 2008.
+\bibitem{2-yang-et-al-2024}
+Z. Yang, K. Chen, K. Zeng, W. Zhang, and N. Yu,
+``Provably secure robust image steganography,''
+\emph{IEEE Transactions on Multimedia},
+vol. 26, pp. 5040--5053, 2024.
+\bibitem{3-zhu-et-al-2018}
+J. Zhu, R. Kaplan, J. Johnson, and L. Fei-Fei,
+``Hidden: Hiding data with deep networks,''
+in \emph{Proceedings of the European Conference on Computer Vision (ECCV)},
+2018, pp. 657--672.
+\bibitem{4-zhang-et-al-2019-steganogan}
+K. A. Zhang, A. Cuesta-Infante, L. Xu, and K. Veeramachaneni,
+``Steganogan: High capacity image steganography with gans,''
+\emph{arXiv preprint arXiv:1901.03892}, 2019.
+\bibitem{5-lecun-et-al-2015}
+Y. LeCun, Y. Bengio, and G. Hinton,
+``Deep learning,''
+\emph{Nature}, vol. 521, no. 7553, pp. 436--444, 2015.
+\bibitem{6-abadi-andersen-2016}
+M. Abadi and D. G. Andersen,
+``Learning to protect communications with adversarial neural cryptography,''
+\emph{arXiv preprint arXiv:1610.06918}, 2016.
+\bibitem{7-gerault-et-al-2026}
+D. Gerault, A. Hambitzer, E. Ronen, and A. Shamir,
+``Deep neural cryptography,''
+in \emph{Advances in Cryptology -- EUROCRYPT 2026},
+ser. Lecture Notes in Computer Science, vol. 16546.
+Springer, 2026, pp. 513--543.
+\bibitem{8-luo-et-al-2023}
+Z. Luo, S. Li, G. Li, Z. Qian, and X. Zhang,
+``Securing fixed neural network steganography,''
+in \emph{Proceedings of the 31st ACM International Conference on Multimedia (MM)},
+2023, pp. 7943--7951.
+\bibitem{9-bengio-et-al-2013}
+Y. Bengio, A. Courville, and P. Vincent,
+``Representation learning: A review and new perspectives,''
+\emph{IEEE Transactions on Pattern Analysis and Machine Intelligence},
+vol. 35, no. 8, pp. 1798--1828, 2013.
+\bibitem{10-szegedy-et-al-2014}
+C. Szegedy, W. Zaremba, I. Sutskever, J. Bruna, D. Erhan,
+I. Goodfellow, and R. Fergus,
+``Intriguing properties of neural networks,''
+in \emph{International Conference on Learning Representations}, 2014.
+\bibitem{11-goodfellow-et-al-2015}
+I. J. Goodfellow, J. Shlens, and C. Szegedy,
+``Explaining and harnessing adversarial examples,''
+in \emph{International Conference on Learning Representations}, 2015.
+\bibitem{12-zhang-et-al-2019-sensitivity}
+C. Zhang, A. Liu, X. Liu, Y. Xu, H. Yu, Y. Ma, and T. Li,
+``Interpreting and improving adversarial robustness of deep neural networks with neuron sensitivity,''
+\emph{arXiv preprint arXiv:1909.06978}, 2019.
+\bibitem{13-suri-evans-2020}
+A. Suri and D. Evans,
+``One neuron to fool them all,''
+\emph{arXiv preprint arXiv:2003.09372}, 2020.
+\bibitem{14-hu-et-al-2024}
+K. Hu, M. Wang, X. Ma, J. Chen, X. Wang, and X. Wang,
+``Learning-based image steganography and watermarking: A survey,''
+\emph{Expert Systems with Applications}, p. 123715, 2024.
+\bibitem{15-deng-et-al-2009}
+J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei,
+``Imagenet: A large-scale hierarchical image database,''
+in \emph{2009 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+2009, pp. 248--255.
+\bibitem{16-yao-et-al-2024}
+Y. Yao, L. Huang, H. Wang, Q. Chang, W. Ren, and F. Xiao,
+``Robust adaptive steganography based on adaptive STC-ECC,''
+\emph{IEEE Transactions on Multimedia},
+vol. 26, pp. 5477--5489, 2024.
+\bibitem{17-li-et-al-2025}
+F. Li, H. Liu, X. Zhang, and C. Qin,
+``StegFlow: Flow-based high-frequency distribution mapping network for multi-image steganography,''
+\emph{IEEE Transactions on Multimedia},
+vol. 27, pp. 9555--9569, 2025.
+\bibitem{18-liu-et-al-2026}
+X. Liu, L. Zhong, X. Kang, G. Schaefer, D. Huang, and Z. Ma,
+``High-capacity generative image steganography approach for hiding multiple secret images,''
+\emph{IEEE Transactions on Multimedia},
+vol. 28, pp. 4942--4955, 2026.
+\bibitem{19-kishore-et-al-2021}
+V. Kishore, X. Chen, Y. Wang, B. Li, and K. Q. Weinberger,
+``Fixed neural network steganography: Train the images, not the network,''
+in \emph{International Conference on Learning Representations (ICLR)}, 2021.
+\bibitem{20-ghamizi-et-al-2021}
+S. Ghamizi, M. Cordy, M. Papadakis, and Y. Le Traon,
+``Evasion attack Steganography: Turning vulnerability of machine learning to adversarial attacks into a real-world application,''
+in \emph{Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) Workshops},
+October 2021, pp. 31--40.
+\bibitem{21-he-et-al-2016}
+K. He, X. Zhang, S. Ren, and J. Sun,
+``Deep residual learning for image recognition,''
+in \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+2016, pp. 770--778.
+\bibitem{22-dottling-et-al-2012}
+N. Döttling, J. Müller-Quade, and A. C. A. Nascimento,
+``Ind-cca secure cryptography based on a variant of the lpn problem,''
+in \emph{International Conference on the Theory and Application of Cryptology and Information Security (ASIACRYPT)},
+2012, pp. 485--503.
+\bibitem{23-gunther-et-al-2024}
+F. Günther, D. Stebila, and S. Veitch,
+``Obfuscated key exchange,''
+in \emph{Proceedings of the 2024 on ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+2024, pp. 2385--2399.
+\bibitem{24-ma-et-al-2018}
+N. Ma, X. Zhang, H.-T. Zheng, and J. Sun,
+``Shufflenet v2: Practical guidelines for efficient cnn architecture design,''
+in \emph{Proceedings of the European Conference on Computer Vision (ECCV)},
+2018, pp. 116--131.
+\bibitem{25-ssir-github-2025}
+GitHub Repository,
+``SSIR: A secure and stealthy information representation framework via image-key-controlled dnn states,''
+2025, accessed: Nov. 14, 2025. [Online]. Available:
+\url{https://github.com/no-nameno-name/SSIR}.
+\bibitem{26-barker-2020}
+E. Barker,
+``Recommendation for key management: Part 1---general,''
+National Institute of Standards and Technology,
+Tech. Rep. NIST SP 800-57 Part 1 Rev. 5, May 2020. [Online]. Available:
+\url{https://doi.org/10.6028/NIST.SP.800-57pt1r5}.
+\end{thebibliography}
+% --- end backmatter/references ---
+% --- backmatter/appendix.tex ---
+\appendix
+\chapter*{附录}
+\addcontentsline{toc}{chapter}{附录}
+
+\newcounter{appendixsection}
+\newcommand{\appendixsection}[1]{%
+  \refstepcounter{appendixsection}%
+  \section*{附录\Alph{appendixsection}\quad #1}%
+}
+
+\appendixsection{操作域上的非线性}
+DNN组件产生输入依赖的局部响应，这些响应跨特征混合并跨层复合。对于具有\(L\)个隐藏层和逐点激活的前馈网络，在可微点处的雅可比矩阵具有如下形式
+\begin{equation}
+J_{f_\theta}(x) = W^{(L+1)} D^{(L)}(x) W^{(L)} \cdots D^{(1)}(x) W^{(1)}, \tag{21}
+\end{equation}
+其中\(W^{(l)}\)是权重矩阵，\(D^{(l)}(x)\)包含在当前预激活处的激活导数。对于ReLU网络，局部仿射映射可以跨越激活区域发生变化，其数量取决于架构[1]。
+
+令\(G(i) = (\overline{l_{s_1}(i)}, \ldots, \overline{l_{s_\ell}(i)})\)表示选定神经元的分组响应。如果单个仿射映射在包含被比较输入的定义域上描述\(G\)，那么
+\begin{equation}
+G(i) = Ai + b \quad \Longrightarrow \quad G(c + k) - G(c) = Ak. \tag{22}
+\end{equation}
+此时连续响应中由密钥诱导的变化独立于\(c\)。非线性映射可以使这一变化依赖于\(c\)，从而塑造图像与密钥之间的相互作用。附录B中的阈值决策确定了这些响应如何转换为离散消息状态。
+
+这一比较解释了SSIR所使用的响应机制。附录D和E中的安全界刻画了所得的输出分布和恢复分布。
+\appendixsection{连续到离散状态表示}
+令 \(z(i) \in \mathbb{R}^d\) 为第IV-C1节中定义的选定神经元状态向量，其中 \(g\ell \le d\) 且 \(t \in (0,1)\)。定义
+\begin{equation}
+G_j(i) = \frac{1}{g} \sum_{a=g(j-1)+1}^{gj} z_a(i),
+\end{equation}
+\begin{equation}
+[F_k(c)]_j = \mathbf{1}[G_j(c+k) \ge t], \quad 1 \le j \le \ell. \tag{23}
+\end{equation}
+对于每个 \(s \in \{0,1\}^\ell\)，关联的阈值单元为
+\begin{equation}
+\mathcal{B}_s = \{u \in \mathbb{R}^\ell : \mathbf{1}[u_j \ge t] = s_j \text{ for all } j\}. \tag{24}
+\end{equation}
+单元 \(\mathcal{B}_s\) 划分 \(\mathbb{R}^\ell\)，并且
+\begin{equation}
+\Omega_s = G^{-1}(\mathcal{B}_s) \cap \mathcal{I}_{\mathrm{fp}}. \tag{25}
+\end{equation}
+因此，非空的 \(\Omega_s\) 划分了融合图像域，并且每个输入恰好确定一个表示字符串。
+
+在生成过程中，连续损失
+\begin{equation}
+l_{be}^{(n)} = \sum_{j=1}^\ell (G_j(p_n + k) - s_{t_j})^2 \tag{26}
+\end{equation}
+与直接和间接泄漏损失一起指导优化。截断产生下一个固定精度图像，其离散状态由算法1中的循环条件评估。因此，成功终止由下式确定
+\begin{equation}
+F_k(p_n) = S_t \iff p_n + k \in \Omega_{S_t}. \tag{27}
+\end{equation}
+约定的数值约定固定了图像表示、融合加法、DNN推理、状态读出、分组和阈值评估。融合使用可交换的逐元素加法，无截断或溢出；\(T_{\mathrm{trc}}\) 中的截断应用于更新后的图像分量。双方评估相同的确定性 \(F_k\)。对于成功输出 \(c = p_{n^*}\)，恢复因此给出
+\begin{equation}
+\widehat{S}_t = F_k(c) = S_t, \quad \mathrm{DEC}_k(c) = \mathrm{Et}^{-1}(S_t) = m. \tag{28}
+\end{equation}
+这是下文使用的正确性关系。截断使优化和恢复期间使用的图像表示一致，而约定的评估约定确定状态映射。
+
+\appendixsection{概率密文图像生成的进一步分析}
+\subsection*{A. 成功输出分布}
+令 \(\mathcal{R} = \mathrm{supp}(D_R)\) 且 \(\Xi = \mathrm{supp}(D_\Xi)\)，并令 \(\mathrm{Succ}\) 表示成功终止。每次尝试独立采样 \(r\) 和 \(\xi\)。对于固定的 \(k, m\)，成功执行中初始图像的分布为
+\begin{equation}
+w_{k,m}(r) = \frac{D_R(r) \Pr[\mathrm{Succ} \mid k, m, r]}{\Pr[\mathrm{Succ} \mid k, m]}. \tag{29}
+\end{equation}
+由第V节中的支持配置条件，分母为正。令 \(\mathcal{R}_{k,m} = \mathrm{supp}(w_{k,m})\)。对于 \(r \in \mathcal{R}_{k,m}\)，定义
+\begin{equation}
+\begin{aligned}
+p_{k,m,r}(c) &= \Pr[\mathrm{ENC}_k(m; r, \xi) = c \mid \mathrm{Succ}, k, m, r], \\
+p_{k,m}(c) &= \sum_{r \in \mathcal{R}_{k,m}} w_{k,m}(r) p_{k,m,r}(c), 
+\end{aligned} \tag{30}
+\end{equation}
+其中第一个概率是对 \(\xi \leftarrow D_\Xi\) 取的。这些分布是归一化的，并且成功输出预言机的独立调用独立地采样 \(p_{k,m}\)。
+\subsection*{B. 碰撞贡献与一致界}
+
+定义来自不同初始图像的输出分布之间的最大重叠为
+\begin{equation}
+\varepsilon_{\mathrm{init}} = \max_{\substack{k \in \mathcal{K}, \ m \in \mathcal{M} \\ r_1, r_2 \in \mathcal{R}_{k,m}, \ r_1 \neq r_2}} \sum_{c \in \mathcal{C}} p_{k,m,r_1}(c) p_{k,m,r_2}(c). \tag{31}
+\end{equation}
+如果不存在可接受的相异对，则令 \(\varepsilon_{\mathrm{init}} = 0\)。对于固定初始图像，定义
+\begin{equation}
+\varepsilon_{\mathrm{opt}} = \max_{\substack{k \in \mathcal{K}, \ m \in \mathcal{M} \\ r \in \mathcal{R}_{k,m}}} \sum_{c \in \mathcal{C}} p_{k,m,r}(c)^2. \tag{32}
+\end{equation}
+这两个量分别界定了不同初始图像之间和固定初始图像内部的碰撞。
+
+对于固定的 \(k, m\)，简记 \(w_r = w_{k,m}(r)\) 和 \(p_r = p_{k,m,r}\)，并令 \(\kappa_{k,m} = \sum_r w_r^2\)。两个独立的成功输出满足
+\begin{equation}
+\begin{aligned}
+\Pr[c_1 = c_2 \mid k, m] &= \sum_r w_r^2 \sum_c p_r(c)^2 \\
+&\quad + \sum_{r_1 \neq r_2} w_{r_1} w_{r_2} \sum_c p_{r_1}(c) p_{r_2}(c) \\
+&\le \kappa_{k,m} \varepsilon_{\mathrm{opt}} + (1 - \kappa_{k,m}) \varepsilon_{\mathrm{init}}.
+\end{aligned} \tag{33}
+\end{equation}
+因此，
+\begin{equation}
+\varepsilon_{\mathrm{prob}} = \max_{k,m} \left[ (1 - \kappa_{k,m}) \varepsilon_{\mathrm{init}} + \kappa_{k,m} \varepsilon_{\mathrm{opt}} \right] \tag{34}
+\end{equation}
+是式(14)的一致界，并且 \(\Pr[c_1 \neq c_2 \mid k, m] \ge 1 - \varepsilon_{\mathrm{prob}}\)。
+
+如果每次尝试都以概率1成功，则 \(w_{k,m} = D_R\) 且 \(\kappa_{k,m} = \kappa_R = \sum_r D_R(r)^2\)，于是
+\begin{equation}
+\varepsilon_{\mathrm{prob}} = (1 - \kappa_R) \varepsilon_{\mathrm{init}} + \kappa_R \varepsilon_{\mathrm{opt}}. \tag{35}
+\end{equation}
+泄漏损失倾向于使图像与初始图像相似，而独立采样的R-FGSM状态则改变更新轨迹。碰撞量刻画了所选配置下得到的输出分布。
+
+\appendixsection{IND-CPA优势界与查询限制}
+\subsection*{A. 参考分布与转录偏差}
+
+令 \(N = |\mathcal{M}|\)，\(\pi(k) = \Pr[\mathrm{KeyGen}() = k]\)，并定义
+\begin{equation}
+\bar{p}_k(c) = \frac{1}{N} \sum_{u \in \mathcal{M}} p_{k,u}(c). \tag{36}
+\end{equation}
+
+参考预言机独立地从 \(\bar{p}_k\) 中采样每个输出，忽略所请求的消息。
+
+对于具有相异 \(c_i\) 且正似然低于的转录 \(T_j = ((m_1, c_1), \ldots, (m_j, c_j))\)，定义
+\begin{equation}
+\eta_q = \max_{\substack{T_j \text{ 无碰撞} \\ 1 \le j \le q}} \left| \frac{\sum_{k \in \mathcal{K}} \pi(k) \prod_{i=1}^j p_{k,m_i}(c_i)}{\sum_{k \in \mathcal{K}} \pi(k) \prod_{i=1}^j \bar{p}_k(c_i)} - 1 \right|. \tag{37}
+\end{equation}
+
+对于挑战条目，\(m_i\) 仅表示实际消息 \(m_b\) 以计算记录似然。
+
+\subsection*{B. 混合游戏}
+
+令 \(G_0\) 为真实的IND-CPA游戏。正确性意味着 \(p_{k,u}(c) > 0 \Rightarrow \mathrm{DEC}_k(c) = u\)。因此，对于固定密钥，不同消息具有不相交的成功输出支撑，并且
+\begin{equation}
+p_{k,m}(c) = N \bar{p}_k(c) \mathbf{1}[\mathrm{DEC}_k(c) = m],
+\end{equation}
+\begin{equation}
+\Pr_{c \leftarrow \bar{p}_k} [\mathrm{DEC}_k(c) = m] = \frac{1}{N}. \tag{38}
+\end{equation}
+
+在 \(G_1\) 中，每个对 \(m\) 的请求，包括对 \(m_b\) 的挑战请求，都从以 \(\mathrm{DEC}_k(c) = m\) 为条件的 \(\bar{p}_k\) 中采样。其输出律恰好是 \(p_{k,m}\)，因此 \(G_0 \equiv G_1\)。
+
+在 \(G_2\) 中，每个请求均匀地从 \(\mathcal{M}\) 中采样 \(u\)，并返回一个独立的 \(c \leftarrow \mathrm{ENC}_k(u)\)。每个输出因此服从 \(\bar{p}_k\)。固定对手的随机性和挑战比特，对于固定顺序的记录，自适应查询选择因子相互抵消。因此，
+\begin{equation}
+\frac{\Pr[G_1 : T_j]}{\Pr[G_2 : T_j]} = \frac{\sum_k \pi(k) \prod_{i=1}^j p_{k,m_i}(c_i)}{\sum_k \pi(k) \prod_{i=1}^j \bar{p}_k(c_i)}. \tag{39}
+\end{equation}
+
+每个真实记录都具有正参考似然。因此，式37将无碰撞贡献的统计距离上界限制为 \(\eta_q/2\)，包括在自适应消息选择下。
+
+\subsection*{C. 重复输出与证明完成}
+
+令 \(\mathrm{Coll}\) 表示至多 \(q\) 个生成输出中的重复输出。在 \(G_1\) 中，不同消息的输出不能重合。对于 \(i < j\)，以密钥、对手随机性、挑战比特以及输出 \(i\) 之前的历史为条件。记 \(p(c) = p_{k,m_i}(c)\)，并令 \(a_c \in [0,1]\) 为请求 \(j\) 发生且目标为 \(m_i\) 的条件概率，给定 \(c_i = c\)。请求 \(j\) 处的新随机性给出
+\begin{equation}
+\Pr_{G_1}[c_i = c_j] \le \sum_c p(c) a_c p(c) \le \sum_c p(c)^2 \le \varepsilon_{\mathrm{prob}}. \tag{40}
+\end{equation}
+
+在 \(G_2\) 中，固定密钥支撑的不相交性给出
+\begin{equation}
+\sum_c \bar{p}_k(c)^2 = \frac{1}{N^2} \sum_{m \in \mathcal{M}} \sum_c p_{k,m}(c)^2 \le \frac{\varepsilon_{\mathrm{prob}}}{N}. \tag{41}
+\end{equation}
+
+联合界给出 \(\Pr_{G_s}[\mathrm{Coll}] \le \binom{q}{2} \varepsilon_{\mathrm{prob}}\)，其中 \(s \in \{1,2\}\)。结合无碰撞和重复输出贡献，
+\begin{equation}
+\begin{aligned}
+\Delta(G_1, G_2) &\le \frac{\eta_q}{2} + \frac{\Pr_{G_1}[\mathrm{Coll}] + \Pr_{G_2}[\mathrm{Coll}]}{2} \\
+&\le \frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}}.
+\end{aligned} \tag{42}
+\end{equation}
+这里 \(\Delta\) 表示统计距离。对手在 \(G_2\) 中的视图独立于 \(b\)。由于 \(G_0 \equiv G_1\)，相同的界适用于真实游戏中的优势，从而证明定理1。
+
+\subsection*{D. 可接受的生成查询限制}
+
+选择非负预算 \(\varepsilon_{\mathrm{mix}}, \varepsilon_{\mathrm{col}}\)，其中 \(\varepsilon_{\mathrm{sec}} = \varepsilon_{\mathrm{mix}} + \varepsilon_{\mathrm{col}} < 1/2\)。如果
+\begin{equation}
+\frac{\eta_Q}{2} \le \varepsilon_{\mathrm{mix}}, \quad \binom{Q}{2} \varepsilon_{\mathrm{prob}} \le \varepsilon_{\mathrm{col}}, \tag{43}
+\end{equation}
+则整数生成查询限制 \(Q \ge 1\) 是可接受的。
+
+由式37，增加查询限制会扩大取最大值的记录集合。因此 \(\eta_q\) 是非递减的，对于 \(q \ge 1\)，\(\binom{q}{2} \varepsilon_{\mathrm{prob}}\) 也是非递减的。对于每个 \(1 \le q \le Q\)，
+\begin{equation}
+\frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}} \le \varepsilon_{\mathrm{mix}} + \varepsilon_{\mathrm{col}} = \varepsilon_{\mathrm{sec}}, \tag{44}
+\end{equation}
+这证明了式18。
+
+这通过诱导分布直接定义了允许的限制，而没有规定 \(\eta_q\) 的增长模型。它不需要选择最大的可接受限制。如果没有 \(Q \ge 1\) 满足式43，则该界不能证明所选优势预算是合理的。
+
+\appendixsection{IND-CCA1优势界与恢复限制}
+
+\subsection*{A. 同密钥与分裂密钥预言机游戏}
+
+两个游戏都采样 \(k \leftarrow \mathrm{KeyGen}()\) 用于生成。分裂密钥游戏还采样一个独立的 \(\bar{k} \leftarrow \mathrm{KeyGen}()\)，并在整个游戏过程中固定。区分者可以交错进行生成和恢复查询，直到它关闭恢复阶段；此后仅允许生成查询。这些辅助游戏没有外部挑战比特。
+
+维护一个由对 \((c, m)\) 组成的生成表 \(\mathrm{T}_{\mathrm{enc}}\)，以及一个包含对每个恢复输入首次响应的恢复表 \(\mathrm{T}_{\mathrm{dec}}\)。对于 \(s \in \{\mathrm{same}, \mathrm{split}\}\)，令 \(k_{\mathrm{same}} = k\) 且 \(k_{\mathrm{split}} = \bar{k}\)。恢复查询按以下顺序处理：
+\begin{equation}
+\mathrm{GameDec}_s(x) = 
+\begin{cases}
+y, & (x, y) \in \mathrm{T}_{\mathrm{dec}}, \\
+m, & (x, m) \in \mathrm{T}_{\mathrm{enc}}, \\
+\mathrm{DEC}_{k_s}(x), & \text{否则}.
+\end{cases} \tag{45}
+\end{equation}
+将每个首次恢复响应存储在 \(\mathrm{T}_{\mathrm{dec}}\) 中。重复输入保留其缓存响应，即使它们后来作为生成输出出现。记 \(P_s^{\mathcal{D}} = \Pr[\mathrm{Game}_s^{\mathcal{D}} = 1]\) 并定义
+\begin{equation}
+\delta_{\mathrm{dec}}(q, q_d) = \sup_{\mathcal{D}} \left| P_{\mathrm{same}}^{\mathcal{D}} - P_{\mathrm{split}}^{\mathcal{D}} \right|, \tag{46}
+\end{equation}
+其中 \(\mathcal{D}\) 遍历概率多项式时间区分者，它们在关闭恢复阶段前最多接收 \(q\) 个生成输出并最多进行 \(q_d\) 次恢复查询。
+
+\subsection*{B. 归约到IND-CPA}
+
+构造一个IND-CPA对手 \(\mathcal{A}\)，它运行 \(\mathcal{A}'\)，将其生成查询转发给CPA预言机，并将其挑战对转发给CPA挑战者。它独立采样 \(\bar{k}\)，并使用式45中的分裂密钥规则和本地表回答挑战前恢复查询。挑战前生成消息对模拟器已知。未知的挑战消息不需要，因为恢复查询在挑战前结束。
+
+为了将此模拟与真实的CCA1游戏进行比较，为辅助游戏构造一个区分者 \(\mathcal{D}\)。它运行 \(\mathcal{A}'\) 并转发其预言机请求。当 \(\mathcal{A}'\) 提交 \((m_0, m_1)\) 时，它采样 \(b \leftarrow \{0, 1\}\)，关闭恢复阶段，并获得 \(m_b\) 的一个生成输出作为挑战。它输出 \(1[b' = b]\)。此挑战生成调用包含在 \(q\) 中。
+
+令 \(P_{\mathrm{same}}\) 和 \(P_{\mathrm{split}}\) 为所得成功概率。正确性和确定性恢复使同密钥视图与真实CCA1视图相同，而分裂密钥视图是CPA模拟。式46给出 \(|P_{\mathrm{same}} - P_{\mathrm{split}}| \le \delta_{\mathrm{dec}}(q, q_d)\)。因此，
+\begin{equation}
+\begin{aligned}
+\mathrm{Adv}_{\mathcal{A}'}^{\mathrm{IND-CCA1}} &= |P_{\mathrm{same}} - 1/2| \\
+&\le |P_{\mathrm{split}} - 1/2| + \delta_{\mathrm{dec}}(q, q_d) \\
+&= \mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} + \delta_{\mathrm{dec}}(q, q_d).
+\end{aligned} \tag{47}
+\end{equation}
+代入定理1即证明式19。
+
+\subsection*{C. 命中事件之外的似然偏差}
+
+固定区分者的随机性和一个完整的有序转录 \(\tau\)，包括恢复阶段的关闭。提取记录
+\begin{equation}
+\begin{aligned}
+T_E(\tau) &= ((m_1, c_1), \ldots, (m_e, c_e)), \quad e \le q, \\
+T_D^\circ(\tau) &= ((x_1, y_1), \ldots, (x_h, y_h)), \quad h \le q_d.
+\end{aligned} \tag{48}
+\end{equation}
+第二条记录仅包含首次非重放恢复查询：重复输入以及首次查询时已记录为生成输出的输入被排除。令
+\begin{equation}
+\begin{aligned}
+L_E(k) &= \prod_{i=1}^e p_{k,m_i}(c_i), \\
+L_D(k) &= \prod_{j=1}^h \mathbf{1}[\mathrm{DEC}_k(x_j) = y_j].
+\end{aligned} \tag{49}
+\end{equation}
+定义 \(\mathrm{Hit}\) 为 \(T_D^\circ(\tau)\) 中的输入随后作为生成输出返回的事件。在该事件之外，同密钥与分裂密钥的似然比为
+\begin{equation}
+R(\tau) = \frac{\sum_k \pi(k) L_E(k) L_D(k)}{\left( \sum_k \pi(k) L_E(k) \right) \left( \sum_k \pi(\bar{k}) L_D(\bar{k}) \right)}. \tag{50}
+\end{equation}
+对于查询限制 \(q, d\)，定义
+\begin{equation}
+\zeta_{q,d} = \max_{\substack{\tau \text{ 在 Hit 外可达} \\ |T_E(\tau)| \le q, \ |T_D^\circ(\tau)| \le d \\ \text{分裂密钥似然} > 0}} |R(\tau) - 1|. \tag{51}
+\end{equation}
+对于完整的有序转录，自适应查询选择因子相互抵消。每个正的同密钥似然都有正的分裂密钥似然。因此，\(\mathrm{Hit}\) 之外的转录对统计距离的贡献至多为 \(\zeta_{q, q_d} / 2\)。
+
+\subsection*{D. 命中概率与恢复查询限制}
+
+定义 \(\mu_{\mathrm{enc}} = \max_{k,m,c} p_{k,m}(c)\)。由于 \(p_{k,m}(c)^2 \le \sum_z p_{k,m}(z)^2 \le \varepsilon_{\mathrm{prob}}\)，
+\begin{equation}
+\mu_{\mathrm{enc}} \le \sqrt{\varepsilon_{\mathrm{prob}}}. \tag{52}
+\end{equation}
+对于每个较早的首次非重放恢复输入和每个较晚的生成输出，新的生成随机性将条件命中概率限制在 \(\mu_{\mathrm{enc}}\) 内。这在两个游戏的自适应查询选择下都成立。因此，联合界给出
+\begin{equation}
+\Pr[\mathrm{Game}_s : \mathrm{Hit}] \le q q_d \mu_{\mathrm{enc}}, \quad s \in \{\mathrm{same}, \mathrm{split}\}. \tag{53}
+\end{equation}
+结合 \(\mathrm{Hit}\) 内部和外部的贡献，
+\begin{equation}
+\begin{aligned}
+\delta_{\mathrm{dec}}(q, q_d) &\le \frac{\zeta_{q, q_d}}{2} + \frac{1}{2} \sum_{s \in \{\mathrm{same}, \mathrm{split}\}} \Pr[\mathrm{Game}_s : \mathrm{Hit}] \\
+&\le \frac{\zeta_{q, q_d}}{2} + q q_d \mu_{\mathrm{enc}} \\
+&\le \frac{\zeta_{q, q_d}}{2} + q q_d \sqrt{\varepsilon_{\mathrm{prob}}}.
+\end{aligned} \tag{54}
+\end{equation}
+从附录D固定一个可接受的生成查询限制 \(Q \ge 1\)，并选择 \(\varepsilon_{\mathrm{dec}} \ge 0\) 使得 \(\varepsilon_{\mathrm{sec}} + \varepsilon_{\mathrm{dec}} < 1/2\)。如果
+\begin{equation}
+\frac{\zeta_{Q, Q_d}}{2} + Q Q_d \mu_{\mathrm{enc}} \le \varepsilon_{\mathrm{dec}}, \tag{55}
+\end{equation}
+则整数恢复查询限制 \(Q_d \ge 0\) 是可接受的。式51中的最大值是在嵌套转录集合上取的，因此 \(\zeta_{q,d}\) 在两个查询限制中都是非递减的。对于 \(1 \le q \le Q\) 和 \(q_d \le Q_d\)，
+\begin{equation}
+\begin{aligned}
+\delta_{\mathrm{dec}}(q, q_d) &\le \frac{\zeta_{q, q_d}}{2} + q q_d \mu_{\mathrm{enc}} \\
+&\le \frac{\zeta_{Q, Q_d}}{2} + Q Q_d \mu_{\mathrm{enc}} \le \varepsilon_{\mathrm{dec}}.
+\end{aligned} \tag{56}
+\end{equation}
+结合式18，这证明了式20。在没有恢复查询时，\(L_D(k) = 1\)，所以 \(\zeta_{q,0} = 0\)；两个预言机游戏重合，且 \(\delta_{\mathrm{dec}}(q, 0) = 0\)。因此 \(Q_d = 0\) 总是恢复仅生成基线，而正的恢复允许量需要相应的分布条件。
+% --- end backmatter/appendix.tex ---
 \end{document}

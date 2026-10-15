@@ -1,0 +1,104 @@
+\appendixsection{安全性分析与证明概要}
+我们分析了图像密钥控制表示下与输入相关的 DNN 响应，刻画了密文图像的概率生成过程及其多语义特性，
+并推导了查询相关的 IND-CPA 与 IND-CCA1 优势上界。其中，响应分析用于阐明信息表示机制，形式化界限则用于刻画生成输出与恢复分布。
+本节中，ENC 表示算法 1 的完整生成流程（包括泄露损失与截断），DEC 表示消息恢复过程。
+\subsection*{用于密钥控制表示的DNN非线性}
+\textbf{1) 输入依赖的DNN响应：}
+SSIR使用选定神经元的分组响应来表示图像密钥下的消息。
+对于不同的密文图像，添加相同的密钥会在这些连续响应中产生不同的变化。
+因此，DNN的非线性响应可以使密钥诱导的变化依赖于当前图像。
+附录A通过与操作域上的固定仿射映射进行比较，阐明了这种相互作用。
+
+\textbf{2) DNN响应的离散使用：}
+受密码操作神经实现[7]的启发，SSIR通过IV-C1节中定义的分组编码将连续DNN响应连接到离散消息状态。
+令 \(\mathcal{M}\) 为支持的等长消息空间，具有双射编码 \(\mathrm{Et} : \mathcal{M} \to \{0,1\}^\ell\)，\(C_{\mathrm{fp}}\) 为有限固定精度密文图像域，\(\mathcal{K} = \mathrm{supp}(\mathrm{KeyGen})\) 为合法图像密钥域。
+我们考虑支持的配置，其中对于每个 \(k \in \mathcal{K}\) 和 \(m \in \mathcal{M}\)，生成以正概率成功。
+定义
+\begin{equation}
+\begin{array}{rcl}
+F_k(c) &=& \mathrm{Ec}(z(c+k); g, t), \\
+\mathrm{DEC}_k(c) &=& \mathrm{Et}^{-1}(F_k(c)).
+\end{array}
+\end{equation}
+
+在约定的DNN、编码和数值设置下，双方评估相同的确定性映射 \(F_k\)。
+对于 \(\mathcal{I}_{\mathrm{fp}} = C_{\mathrm{fp}} + \mathcal{K}\)，将与字符串 \(s\) 相关联的融合图像区域定义为
+\begin{equation}
+\Omega_s = \{ i \in \mathcal{I}_{\mathrm{fp}} : \mathrm{Ec}(z(i); g, t) = s \}.
+\end{equation}
+那么当且仅当 \(c + k \in \Omega_s\) 时，\(F_k(c) = s\)。
+在生成过程中，连续分组响应提供优化信号，而离散条件 \(F_k(p_n) = \mathrm{Et}(m)\) 决定成功终止。
+因此，所得的 \(c = p_n\) 满足 \(\mathrm{DEC}_k(c) = m\)。
+因此，相同的DNN响应指导状态诱导，并在阈值处理后确定恢复的字符串。
+当分组响应的变化超过配置的阈值时，它会影响所表示的比特。
+附录B详细介绍了这种从连续到离散的构造及其恢复一致性。
+
+\subsection*{概率生成与多语义}
+
+SSIR支持两种互补的表示形式：生成可以为固定消息和密钥产生不同的图像，而固定图像在兼容密钥下可以接受不同的消息解释。
+
+\textbf{1) 概率生成：}
+每次生成尝试使用两个独立采样的随机源：
+\begin{equation}
+r \leftarrow D_R, \quad \xi \leftarrow D_\Xi, \quad c \leftarrow \mathrm{ENC}_k(m; r, \xi). \tag{13}
+\end{equation}
+初始图像 \(r\) 确定 \(p_0 = r/255\) 以及泄漏损失所使用的参考。执行级随机状态 \(\xi\) 确定随机化的R-FGSM更新。由于梯度从当前图像重新计算，这些随机化更新会影响后续的优化轨迹。
+
+令 \(p_{k,m}(c)\) 为成功生成条件下归一化的输出分布，且多次调用间具有独立的新随机性，令 \(\mathcal{C} = \bigcup_{k,m} \mathrm{supp}(p_{k,m}) \subseteq C_{\mathrm{fp}}\)。对于共享 \(k, m\) 的独立成功输出，
+\begin{equation}
+\mathrm{Pr}[c_1 = c_2 \mid k, m] = \sum_{c \in \mathcal{C}} p_{k,m}(c)^2 \le \varepsilon_{\mathrm{prob}}. \tag{14}
+\end{equation}
+附录C通过区分具有相同和不同初始图像的执行来推导此一致界。它捕获了由两种随机源导致的输出离散度，并提供了下文使用的碰撞项。
+
+\textbf{2) 多语义：}
+对于生成的图像 \(c \in \mathcal{C}\) 和目标消息 \(m \in \mathcal{M}\)，定义兼容密钥集
+\begin{equation}
+\mathcal{K}(c, m) = \{ k' \in \mathcal{K} : \mathrm{DEC}_{k'}(c) = m \}. \tag{15}
+\end{equation}
+\textbf{命题（多语义）。}假设 \(C_{\mathrm{fp}} \subseteq \mathcal{K}\)。则对于每个 \(c \in \mathcal{C}\) 和 \(m \in \mathcal{M}\)，\(\mathcal{K}(c, m) \neq \emptyset\)。
+
+\textbf{证明。}由于 \(c \in C_{\mathrm{fp}} \subseteq \mathcal{K}\)，将 \(c\) 用作图像密钥，并选择一个成功输出 \(c' \leftarrow \mathrm{ENC}_c(m)\)。正确性给出 \(F_c(c') = \mathrm{Et}(m)\)。由于融合图像加法是可交换的，
+\begin{equation}
+F_{c'}(c) = F_c(c') = \mathrm{Et}(m). \tag{16}
+\end{equation}
+由于 \(c' \in C_{\mathrm{fp}} \subseteq \mathcal{K}\)，\(\mathrm{DEC}_{c'}(c) = m\)，所以 \(c' \in \mathcal{K}(c, m)\)。\(\square\)
+
+这种构造为每个选定消息提供了对单张图像的替代解释。兼容密钥特定于所选的 \((c, m)\) 对。下文的分析考虑了共享密钥的记录之间的依赖关系。
+\subsection*{形式化安全分析}
+
+DNN、编码规则和生成设置是公开的。实例化配置固定了KeyGen、\(r\)和\(\xi\)的分布、完整的生成过程以及数值设置。每个游戏采样一个\(k \leftarrow \mathrm{KeyGen}()\)，并使用上述成功输出分布和新的生成随机性。查询计数在该密钥下跨消息和会话累计。对手是概率多项式时间算法，游戏涉及传输的图像和指定的预言机响应。
+
+\textbf{1) IND-CPA优势界：} 对手\(\mathcal{A}\)在挑战前后自适应地查询\(\mathrm{ENC}_k\)。它提交等长消息\(m_0, m_1\)，对于均匀的\(b \in \{0,1\}\)，接收\(c^* \leftarrow \mathrm{ENC}_k(m_b)\)，并输出\(b'\)。其优势为\(\mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} = |\Pr[b' = b] - 1/2|\)。令\(q\)统计所有生成输出，包括\(c^*\)。
+
+我们将真实游戏与参考游戏进行比较，参考游戏为独立采样的均匀消息生成每个输出。令\(\eta_q\)为在最多\(q\)个输出且具有正参考似然的碰撞自由记录上，其转录似然比偏离1的最大绝对偏差。它衡量了这些记录中剩余的消息依赖性；附录D给出了其显式定义。
+
+\textbf{定理1（查询有界IND-CPA优势）。}每个接收最多\(q\)个输出的此类对手满足
+\begin{equation}
+\mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} \le \frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}}. \tag{17}
+\end{equation}
+混合证明利用正确性将真实生成表示为来自参考分布的条件采样。碰撞自由记录对统计距离的贡献至多为\(\eta_q/2\)，而重复输出对统计距离的贡献至多为\(\binom{q}{2}\varepsilon_{\mathrm{prob}}\)。参考游戏不泄露关于\(b\)的任何信息。
+
+对于优势预算\(\varepsilon_{\mathrm{sec}} = \varepsilon_{\mathrm{mix}} + \varepsilon_{\mathrm{col}} < 1/2\)，附录D规定了关于\(\eta_Q\)和\(\varepsilon_{\mathrm{prob}}\)的条件，以确定可接受的上限\(Q \ge 1\)。对于满足这些条件的任何上限，
+\begin{equation}
+\mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} \le \varepsilon_{\mathrm{sec}}, \quad 1 \le q \le Q. \tag{18}
+\end{equation}
+这给出了CCA1分析的仅生成基线。可接受的上限取决于实例化分布和所选择的优势预算。
+\textbf{2) IND-CCA1 优势界：} 对手 \(\mathcal{A}'\) 可以在挑战前自适应地查询 \(\mathrm{ENC}_k\) 和 \(\mathrm{DEC}_k\)，但挑战后只能查询 \(\mathrm{ENC}_k\)。挑战和优势遵循第 V-C1 节。保留 \(q\) 作为生成输出的数量，并令 \(q_d\) 统计挑战前的恢复查询 \(x \in C_{\mathrm{fp}}\)。
+
+为了分离恢复访问的影响，比较同密钥和分裂密钥预言机游戏。两者都使用 \(k\) 进行生成；分裂密钥游戏在一个独立的固定密钥 \(\bar{k}\) 下回答首次非重放恢复查询，同时保留缓存和精确重放响应。令 \(\delta_{\mathrm{dec}}(q, q_d)\) 为这些限制下它们的最大区分概率差距；见附录 E。
+
+\textbf{定理 2（查询有界 IND-CCA1 优势）。} 对于每个这样的 \(\mathcal{A}'\)，存在一个 IND-CPA 对手 \(\mathcal{A}\) 使得
+\begin{equation}
+\begin{aligned}
+\mathrm{Adv}_{\mathcal{A}'}^{\mathrm{IND-CCA1}} &\le \mathrm{Adv}_{\mathcal{A}}^{\mathrm{IND-CPA}} + \delta_{\mathrm{dec}}(q, q_d) \\
+&\le \frac{\eta_q}{2} + \binom{q}{2} \varepsilon_{\mathrm{prob}} + \delta_{\mathrm{dec}}(q, q_d).
+\end{aligned} \tag{19}
+\end{equation}
+
+分裂密钥视图可以使用 CPA 预言机和 \(k\) 下的本地恢复来模拟。附录 E 通过密钥解耦行为以及较早的恢复输入后来作为生成输出出现的概率，来界定额外的差距。给定一个可接受的 \(Q\)，它指定了恢复查询限制 \(q_d \ge 0\) 的条件，使得
+\begin{equation}
+\mathrm{Adv}_{\mathcal{A}'}^{\mathrm{IND-CCA1}} \le \varepsilon_{\mathrm{sec}} + \varepsilon_{\mathrm{dec}}, \quad 1 \le q \le Q, \quad q_d \le Q_d, \tag{20}
+\end{equation}
+其中 \(\varepsilon_{\mathrm{sec}} + \varepsilon_{\mathrm{dec}} < 1/2\)。当 \(q_d = 0\) 时，额外差距消失，结果退化为定理 1。
+
+这些条件规定了允许的每密钥使用量：部署可以强制执行不大于可接受 \((Q, Q_d)\) 的生成和恢复上限，同时保持所分析的预言机访问模式。有用限制的存在性和大小取决于实例化分布。第 VII 节讨论了密钥更新和访问限制，以控制累计查询。
